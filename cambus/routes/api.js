@@ -6,7 +6,7 @@ router.get('/', function(req, res){
 	res.send('this is api');
 });
 
-router.use('city', require('./city'));
+router.use('/city', require('./city'));
 /*/
 app.use('company', require('./company'));
 app.use('type', require('./type'));

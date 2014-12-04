@@ -5,7 +5,7 @@ var router = express.Router();
 var City = require('../models/city');
 
 router.get('/', function(req, res){
-	Cambus.City.find(function(err, cities){
+	City.find(function(err, cities){
 		if(!err){
 			res.send(cities);
 		}
@@ -13,7 +13,7 @@ router.get('/', function(req, res){
 });
 router.get('/:_id', function(req, res){
 	var _id = req.params._id
-	Cambus.City.findOne({_id:_id}, function(err, city){
+	City.findOne({_id:_id}, function(err, city){
 		if(!err){
 			res.send(city);
 		}
