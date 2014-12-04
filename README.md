@@ -1,0 +1,1 @@
+# CamPal - MEAN Stack

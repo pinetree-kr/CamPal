@@ -1,0 +1,14 @@
+<section>
+	<div id="{{memo._id}}" class="panel panel-default" ng-repeat="memo in memos">
+		<div class="panel-heading">
+			<h3 class="panel-title">{{memo.author}}</h3>
+		</div>
+		<div class="panel-body">
+			<p>{{memo.contents}}</p>
+			<p>
+				<a href="/#/edit/{{memo._id}}" class="btn btn-primary btn-xs">edit</a>
+				<button type="button" class="btn btn-success btn-xs" ng-click="deleteMemo(memo._id)">delete</button>
+			</p>
+		</div>
+	</div>
+</section>
