@@ -1,15 +1,12 @@
 var express = require('express');
 
-var api = express();
+var router = express.Router();
 
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded());
-
-app.get('/', function(req, res){
+router.get('/', function(req, res){
 	res.send('this is api');
 });
 
-app.use('city', require('./city'));
+router.use('city', require('./city'));
 /*/
 app.use('company', require('./company'));
 app.use('type', require('./type'));
@@ -96,4 +93,4 @@ router.delete('/:_id', function(req, res){
 	});
 });
 /**/
-module.exports = api;
+module.exports = router;
