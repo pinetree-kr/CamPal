@@ -1,9 +1,31 @@
 var express = require('express');
-var router = express.Router();
+
+var api = express();
+
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded());
+
+app.get('/', function(req, res){
+	res.send('this is api');
+});
+
+app.use('city', require('./city'));
+/*/
+app.use('company', require('./company'));
+app.use('type', require('./type'));
+app.use('line', require('./line'));
+app.use('bus', require('./bus'));
+app.use('time', require('./time'));
+app.use('terminal', require('./terminal'));
+app.use('user', require('./user'));
+/**/
+
+//var router = express.Router();
 
 //var Cambus = require('../models/cambus');
 
 
+/*/
 router.get('/', function(req, res){
 	res.send('test');
 });
@@ -24,6 +46,7 @@ router.get('/city/:_id', function(req, res){
 		}
 	});
 });
+/**/
 /*/
 router.get('/:_id', function(req, res){
 	var _id = req.params._id;
@@ -73,4 +96,4 @@ router.delete('/:_id', function(req, res){
 	});
 });
 /**/
-module.exports = router;
+module.exports = api;

@@ -12,12 +12,7 @@ app.use(express.static(path.join(__dirname, './www')));
 app.get('/', function(req, res){
 	res.sendfile('index.html');
 });
-/*/
-app.use('/memo', require('./routes/memo'));
-app.use('/user', require('./routes/user'));
-app.use('/push', require('./routes/push'));
-/**/
-app.use('/cambus', require('./routes/cambus'));
+app.use('/api', require('./routes/api'));
 
 
 var server = app.listen(8080, function(){
