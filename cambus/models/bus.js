@@ -4,27 +4,26 @@ var Schema = mongoose.Schema;
 var BusSchema = new Schema({
 	line_id : {
 		type : Schema.Types.ObjectId,
+		required : true,
 		ref : 'line'
 	},
 	company_id : {
 		type : Schema.Types.ObjectId,
+		required : true,
 		ref : 'company'
 	},
 	type_id : {
 		type : Schema.Types.ObjectId,
+		required : true,
 		ref : 'type'
 	},
-	mid_id : {
-		type : Schema.Types.ObjectId,
-		ref : 'city'
-	},
-	duration : Number,
-	native : Number,
-	foreign : Number,
-	visa : Number,
-	abroad : Boolean,
+	mids : [String],
+	price : Number,
+	transfer : Boolean,
+	interational : String,
 	// add for reserve
 	seat : Number,
+	rest_area : Number,
 	updated : {
 		type : Date,
 		default : Date.now

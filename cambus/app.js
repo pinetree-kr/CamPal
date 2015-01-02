@@ -16,10 +16,16 @@ app.use('/api', require('./routes/api'));
 
 
 var server = app.listen(8080, function(){
-	var uri = 'mongodb://10.240.112.154:27017/cambus';
+	var uri = 'mongodb://ds029831.mongolab.com:29831/cambus';
 	var opts ={
-		user:'campalAdmin',
-		pass:'campaldev'
+		/**/
+		user:'campal',
+		pass:'jhsong85'
+		/*/
+		//readonly user
+		user:'cambus',
+		pass:'cambusdev'
+		/**/
 	}
 	mongoose.connect(uri, opts);
 	console.log('listening on port %d', server.address().port);

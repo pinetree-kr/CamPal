@@ -10,15 +10,47 @@
 </head>
 <body>
 <div class="row">
-	<div class="col-md-6 col-md-offset-3">
-		<nav class="navbar navbar-inverse">
+	<div class="col-sm-10 col-sm-offset-1">
+		<nav class="navbar navbar-inverse" role="navigation">
 			<div class="navbar-header">
-				<a class="navbar-brand" href="#">Brand</a>
+				<a class="navbar-brand" href="#">CamBus</a>
 			</div>
 			<div class="collapse navbar-collapse">
-				<a href="/#/write"><button type="button" class="btn navbar-btn navbar-right">쓰기</button></a>
+				<!--
+				<a href="/#/write"><button type="button" class="btn navbar-btn navbar-right">admin</button></a>
+				-->
 			</div>
 		</nav>
+		<div class="row">
+			<section class="col-sm-3">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a href="/#/city"><button class="btn btn-primary btn-lg btn-block"><h3 class="panel-title">City</h3></button></a>
+					</div>
+				</div>
+			</section>
+			<section class="col-sm-3">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a href="/#/company"><button class="btn btn-primary btn-lg btn-block"><h3 class="panel-title">Company</h3></button></a>
+					</div>
+				</div>
+			</section>
+			<section class="col-sm-3">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a href="/#/type"><button class="btn btn-primary btn-lg btn-block"><h3 class="panel-title">Type</h3></button></a>
+					</div>
+				</div>
+			</section>
+			<section class="col-sm-3">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a href="/#/line"><button class="btn btn-primary btn-lg btn-block"><h3 class="panel-title">CamBus</h3></button></a>
+					</div>
+				</div>
+			</section>
+		</div>
 		<div ng-view></div>
 	</div>
 </div>

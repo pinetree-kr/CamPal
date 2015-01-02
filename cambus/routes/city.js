@@ -9,7 +9,7 @@ router.get('/', function(req, res){
 		if(!err){
 			res.send(cities);
 		}
-	});	
+	});
 });
 router.get('/:_id', function(req, res){
 	var _id = req.params._id
