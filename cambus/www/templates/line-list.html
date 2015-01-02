@@ -1,0 +1,29 @@
+<section>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h3 class="panel-title">Lines</h3>
+		</div>
+		<div class="panel-body">
+			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th><center>#</center></th>
+						<th>departure</th>
+						<th>destination</th>
+						<th>distance</th>
+						<th><center>misc</center></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr id="{{line._id}}" ng-repeat="line in lines">
+						<td><center>{{$index+1}}</center></td>
+						<td>{{line.dept.name}}</td>
+						<td>{{line.dest.name}}</td>
+						<td>{{line.distance}}</td>
+						<td></td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</section>
