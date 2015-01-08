@@ -4,32 +4,34 @@ var xlsx = require('node-xlsx');
 var router = express.Router();
 var async = require('async');
 require('array.prototype.find');
-
+/*/
+var updateArray = function(array, oldItem, newItem){
+	for(var i=0; i<array.length; i++){
+		if(array[i]._id == oldItem._id){
+			array[i]._id = newItem._id;
+			break;
+		}
+	}
+}
+/**/
 router.get('/', function(req, res){
 	;
 });
 
 router.post('/', function(req, res){
-	async.waterfall([
-		function(callback){
-			console.log('test1');
-			callback(null);
-		},
-		function(callback){
-			console.log('test2');
-			callback(null);
-		},
-		function(callback){
-			console.log('test3');
-			callback(null);
-		}
-		]);
-	//var filename = req.
-	res.send('non author');
 	var now = new Date();
 	
 	var obj = xlsx.parse(__dirname + '/CamBus_20141202_final.xlsx');
 	if(obj){
+		var City = require('../models/city');
+		var Company = require('../models/company');
+		var Type = require('../models/type');
+		var Line = require('../models/line');
+		var Bus = require('../models/bus');
+		var Time = require('../models/time');
+		var Terminal = require('../models/terminal');
+		var CityRoute = require('../models/cityroute');
+
 		var cities = [];
 		var types = [];
 		var companies = [];
@@ -41,13 +43,6 @@ router.post('/', function(req, res){
 		obj.forEach(function(item, index){
 			switch(item.name){
 			case 'Time':
-				var City = require('../models/city');
-				var Company = require('../models/company');
-				var Type = require('../models/type');
-				var Line = require('../models/line');
-				var Bus = require('../models/bus');
-				var Time = require('../models/time');
-
 				// 출발지쪽 도시전체 입력
 				item.data.forEach(function(record, row){
 					if(row>0){
@@ -80,7 +75,23 @@ router.post('/', function(req, res){
 					}
 				});
 				cities.sort();
-
+/*/
+				// save or update;
+				cities.forEach(function(record){
+					var item = record.toObject();
+					delete item._id;
+					City.findOneAndUpdate(
+						{
+							name : record.name
+						},
+						item,
+						{upsert:true},
+						function(err, object){
+							if(err) res.status(500).send('city:'+err);
+							record._id = object._id;
+						});
+				});
+/**/
 				//회사입력
 				item.data.forEach(function(record, row){
 					if(row>0){
@@ -97,7 +108,22 @@ router.post('/', function(req, res){
 					}
 				});
 				companies.sort();
-
+				/*/
+				companies.forEach(function(record){
+					var item = record.toObject();
+					delete item._id;
+					Company.findOneAndUpdate(
+						{
+							name : record.name
+						},
+						item,
+						{upsert:true},
+						function(err, object){
+							if(err) res.status(500).send('company:'+err);
+							record._id = object._id;
+						});
+				});
+/**/
 				//타입입력
 				item.data.forEach(function(record, row){
 					if(row>0){
@@ -114,7 +140,22 @@ router.post('/', function(req, res){
 					}
 				});
 				types.sort();
-
+				/*/
+				types.forEach(function(record){
+					var item = record.toObject();
+					delete item._id;
+					Type.findOneAndUpdate(
+						{
+							name : record.name
+						},
+						item,
+						{upsert:true},
+						function(err, object){
+							if(err) res.status(500).send('type:'+err);
+							record._id = object._id;
+						});
+				});
+/**/
 				//라인입력
 				item.data.forEach(function(record, row){
 					if(row>0){
@@ -142,7 +183,24 @@ router.post('/', function(req, res){
 					}
 				});
 				lines.sort();
-				//console.log(lines);
+				/*/
+				lines.forEach(function(record){
+					var item = record.toObject();
+					//console.log(record.dept);
+					delete item._id;
+					Line.findOneAndUpdate(
+						{
+							dept : record.dept,
+							dest : record.dest
+						},
+						item,
+						{upsert:true},
+						function(err, object){
+							if(err) res.status(500).send('line:'+err);
+							record._id = object._id;
+						});
+				});
+/**/
 				//버스입력
 				item.data.forEach(function(record, row){
 					if(row>0){
@@ -208,7 +266,24 @@ router.post('/', function(req, res){
 						}
 					}
 				});
-
+				/*/
+				buses.forEach(function(record){
+					var item = record.toObject();
+					delete item._id;
+					Bus.findOneAndUpdate(
+						{
+							line_id : record.line_id,
+							company_id : record.company_id,
+							type_id : record.type_id
+						},
+						item,
+						{upsert:true},
+						function(err, object){
+							if(err) res.status(500).send('bus:'+err);
+							record._id = object._id;
+						});
+				});
+/**/
 				//시간표 입력
 				item.data.forEach(function(record, row){
 					if(row>0){
@@ -240,10 +315,24 @@ router.post('/', function(req, res){
 						times.push(time);
 					}
 				});
+				/*/
+				times.forEach(function(record){
+					var item = record.toObject();
+					delete item._id;
+					Time.findOneAndUpdate(
+						{
+							bus_id : record.bus_id
+						},
+						item,
+						{upsert:true},
+						function(err, object){
+							if(err) res.status(500).send('time:'+err);
+							record._id = object._id;
+						});
+				});
+				/**/
 				break;
-			case 'Terminal':
-				var Terminal = require('../models/terminal');
-
+			case 'Terminal':	
 				// 터미널정보입력
 				item.data.forEach(function(record, row){
 					if(row>0){
@@ -299,12 +388,29 @@ router.post('/', function(req, res){
 							terminal.latlng.lng = latlng[1];
 						}
 						terminals.push(terminal);
-						
 					}
 				});
-				break
+				/*/
+				terminals.forEach(function(record){
+					var item = record.toObject();
+					delete item._id;
+					Terminal.findOneAndUpdate(
+						{
+							city_id : record.city_id,
+							company_id : record.company_id,
+							name : record.name,
+							latlng : record.latlng
+						},
+						item,
+						{upsert:true},
+						function(err, object){
+							if(err) res.status(500).send('terminal:'+err);
+							record._id = object._id;
+						});
+				});
+				/**/
+				break;
 			case 'CityRoutes':
-				var CityRoute = require('../models/cityroute');
 
 				// 시내버스 정보입력
 				item.data.forEach(function(record, row){
@@ -354,97 +460,69 @@ router.post('/', function(req, res){
 								cityroute.latlng.lat = latlng[0];
 								cityroute.latlng.lng = latlng[1];
 							}
-
 							cityroutes.push(cityroute);
 						}
 					}
 				});
+				/*/
+				cityroutes.forEach(function(record){
+					var item = record.toObject();
+					delete item._id;
+					CityRoute.findOneAndUpdate(
+						{
+							city_id : record.city_id,
+							line_no : record.line_no,
+							line_order : record.line_order
+						},
+						item,
+						{upsert:true},
+						function(err, object){
+							if(err) res.status(500).send('cityroute:'+err);
+							record._id = object._id;
+						});
+				});
+				/**/
 				break;
 			}
 		});
 		
-		/**/
-		cities.forEach(function(record){
-			record.save(function(err, item){
-				if(err) res.send(err);
-			});
-		});
-		types.forEach(function(record){
-			record.save(function(err, item){
-				if(err) res.send(err);
-			});
-		});
-		companies.forEach(function(record){
-			record.save(function(err, item){
-				if(err) res.send(err);
-			});
-		});
-		lines.forEach(function(record){
-			record.save(function(err, item){
-				if(err) res.send(err);
-			});
-		});
-		buses.forEach(function(record){
-			record.save(function(err, item){
-				if(err) res.send(err);
-			});
-		});
-		times.forEach(function(record){
-			record.save(function(err, item){
-				if(err) res.send(err);
-			});
-		});
-		terminals.forEach(function(record){
-			record.save(function(err, item){
-				if(err) res.send(err);
-			});
-		});
-		cityroutes.forEach(function(record){
-			record.save(function(err, item){
-				if(err) res.send(err);
-			});
+		// update and save
+		async.eachSeries(
+			cities,
+			function(item, callback){
+				var upsert = item.toObject();
+				delete upsert._id;
+				City.findOneAndUpdate(
+					{name : item.name},
+					upsert,
+					{upsert:true},
+					function(err, object){
+						if(err) err.status(500).send(err);
+						item._id = object._id;
+						callback();
+					}
+				);
+			},
+			function(err){
+				console.log('insert cities done');
+				console.log(cities);
+			}
+		);
+		//console.log(cities);
+		/*/
+		cities.forEach(function(item){
+			var upsert = item.toObject();
+			delete upsert._id;
+			City.findOneAndUpdate(
+				{ name : item.name},
+				upsert,
+				{upsert:true},
+				function(err, object){
+				};
+				);
 		});
 		/**/
-		/**/
-		var Info = require('../models/information');
-		var info = new Info({
-			cities : {
-				size : cities.length,
-				updated : now,
-			},
-			companies : {
-				size : companies.length,
-				updated : now,
-			},
-			types : {
-				size : types.length,
-				updated : now,
-			},
-			lines : {
-				size : lines.length,
-				updated : now,
-			},
-			buses : {
-				size : buses.length,
-				updated : now,
-			},
-			times : {
-				size : times.length,
-				updated : now,
-			},
-			terminals : {
-				size : terminals.length,
-				updated : now,
-			},
-			cityroutes : {
-				size : cities.length,
-				updated : now,
-			},
-		});
-		info.save(function(err, item){
-			if(err) res.send(err);
-		});
-		
+
 		res.send('success');
 	}else{
 		console.error('not found');

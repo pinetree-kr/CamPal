@@ -17,7 +17,7 @@ router.use('/terminal', require('./terminal'));
 router.use('/cityroute', require('./cityroute'));
 router.use('/user', require('./user'));
 router.use('/lastupdate', require('./lastupdate'));
-/*/
+/**/
 router.use('/excel', require('./excel'));
 /**/
 module.exports = router;
