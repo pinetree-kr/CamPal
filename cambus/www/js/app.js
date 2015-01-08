@@ -1,12 +1,7 @@
 var app = angular.module('app', ['ngRoute']);
+var url = "http://130.211.242.214:8080"
 
 app.config(function($routeProvider){
-	/*/
-	$routeProvider.when('/', {
-		templateUrl : 'list.html',
-		controller : 'ListController'
-	});
-/**/
 	$routeProvider.when('/', {
 		templateUrl : 'templates/line-list.html',
 		controller : 'LineListController'
@@ -14,6 +9,10 @@ app.config(function($routeProvider){
 	$routeProvider.when('/line', {
 		templateUrl : 'templates/line-list.html',
 		controller : 'LineListController'
+	});
+	$routeProvider.when('/city', {
+		templateUrl : 'templates/city-list.html',
+		controller : 'CityListController'
 	});
 	$routeProvider.when('/write', {
 		templateUrl : 'write.html',
@@ -25,7 +24,7 @@ app.config(function($routeProvider){
 	});
 });
 app.controller('LineListController', function($scope, $http){
-	$http.get('/api/line').
+	$http.get(url+'/api/line').
 		success(function(data){
 			$scope.lines = data;
 		}).
@@ -33,12 +32,12 @@ app.controller('LineListController', function($scope, $http){
 			console.log(err);
 		});
 });
-app.controller('ListController', function($scope, $http){
-	$http.get('/api/city').success(function(data){
-		$scope.cities = data;
+app.controller('CityListController', function($scope, $http){
+	$http.get(url+'/api/city').success(function(status, data){
+		$scope.cities = status;
 	});
 	$scope.deletecity = function(_id){
-		$http.delete('/api/city/'+_id).success(function(data){
+		$http.delete(url+'/api/city/'+_id).success(function(data){
 			angular.element(document.getElementById(_id)).remove();
 		});
 	}
