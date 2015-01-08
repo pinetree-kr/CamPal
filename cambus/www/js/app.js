@@ -14,6 +14,17 @@ app.config(function($routeProvider){
 		templateUrl : 'templates/city-list.html',
 		controller : 'CityListController'
 	});
+<<<<<<< HEAD
+=======
+	$routeProvider.when('/city/write', {
+		templateUrl : 'templates/city-write.html',
+		controller : 'CityWriteController'
+	});
+	$routeProvider.when('/city/edit/:_id', {
+		templateUrl : 'templates/city-write.html',
+		controller : 'CityEditController'
+	});
+>>>>>>> a518d6743266f8f5e230d973cf209fd54f0a89b8
 	$routeProvider.when('/write', {
 		templateUrl : 'write.html',
 		controller: 'WriteController'
@@ -32,6 +43,7 @@ app.controller('LineListController', function($scope, $http){
 			console.log(err);
 		});
 });
+<<<<<<< HEAD
 app.controller('CityListController', function($scope, $http){
 	$http.get(url+'/api/city').success(function(status, data){
 		$scope.cities = status;
@@ -40,26 +52,46 @@ app.controller('CityListController', function($scope, $http){
 		$http.delete(url+'/api/city/'+_id).success(function(data){
 			angular.element(document.getElementById(_id)).remove();
 		});
+=======
+app.controller('CityListController', function($scope, $http, $location){
+	$http.get('/api/city').success(function(data){
+		$scope.cities = data;
+	});
+	$scope.editCity = function(_id){
+		$location.path('/city/edit/'+_id);
+>>>>>>> a518d6743266f8f5e230d973cf209fd54f0a89b8
 	}
 });
 
-app.controller('WriteController', function($scope, $http, $location){
-	$scope.submitcity = function(city){
+app.controller('CityWriteController', function($scope, $http, $location){
+	$scope.submitCity = function(city){
 		$http.post('/api/city', city).success(function(data){
-			$location.path('/');
+			$location.path('/city');
 		});
 	};
 });
 
-app.controller('EditController', function($scope, $routeParams, $http, $location){
+app.controller('CityEditController', function($scope, $routeParams, $http, $location){
 	$http.get('/api/city/' + $routeParams._id).success(function(data){
-		console.log(data);
+		//console.log(data);
 		$scope.city = data;
+		/*/
+		if(data.pref===undefined){
+			$scope.city.pref=0;
+		}
+		/**/
 	});
-	$scope.submitcity = function(city){
+	$scope.submitCity = function(city){
 		$http.put('/api/city', city).success(function(data){
-			console.log(data);
-			$location.path('/');
+			//console.log(data);
+			$location.path('/city');
 		});
 	};
+	$scope.deleteCity = function(_id){
+		$http.delete('/api/city/'+_id).success(function(data){
+			//angular.element(document.getElementById(_id)).remove();
+			$location.path('/city');
+		});
+	}
+
 });

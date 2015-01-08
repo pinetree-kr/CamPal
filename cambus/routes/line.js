@@ -5,21 +5,18 @@ var City = require('../models/city');
 
 router.get('/', function(req, res){
 	/*/
-	City.find(function(err, cities){
-		if(err) res.send(err);
-		Line.find(function(err, lines){
-			if(err) res.send(err);
-			res.send(lines);
-		});
-	})
-/**/
 	Line.find(
 		null,
-		'dept dest distance',
+		'dept dest distance updated',
 		function(err, lines){
 		if(err) res.send(err);
 		res.send(lines);
 	}).populate('dept', 'name').populate('dest', 'name');
+	/**/
+	Line.find(function(err, lines){
+		if(err) res.send(err);
+		res.send(lines);
+	});
 });
 router.get('/:_id', function(req, res){
 	var _id = req.params._id

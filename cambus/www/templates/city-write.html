@@ -1,0 +1,28 @@
+<section>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title">Add City</h1>
+		</div>
+		<div class="panel-body">
+			<form name="cityForm" ng-submit="submitCity(city)">
+				<div class="form-group">
+					<label for="name">Name</label>
+					<input type="text" name="name" class="form-control" placeholder="Name" required ng-model="city.name">
+				</div>
+				<div class="form-group">
+					<label for="pref">preference</label><br/>
+					<input type="checkbox" name="pref" ng-model="city.pref">&nbsp;High</input><br/>
+					<!--	
+					<textarea id="contents" name="contents" rows="3" class="form-control" placeholder="내용" required ng-model="memo.contents"></textarea>
+					-->
+				</div>
+				<div class="form-group" ng-show="city.pref">
+					<label for="index">Index</label>
+					<input type="text" name="name" class="form-control" placeholder="Index" ng-model="city.index"/>
+				</div>
+				<button type="button" class="btn btn-danger btn-lg" ng-show="city" ng-click="deleteCity(city._id)">지우기</button>
+				<button type="submit" class="btn btn-primary btn-lg" ng-disabled="cityForm.$invalid">확인</button>
+			</form>
+		</div>
+	</div>
+</section>
