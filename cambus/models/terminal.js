@@ -2,6 +2,10 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var TerminalSchema = new Schema({
+	terminal_no : {
+		type : Number,
+		required : true
+	},
 	city_id : {
 		type : Schema.Types.ObjectId,
 		required : true,
