@@ -19,11 +19,13 @@ var Company = require('../models/company');
 var Type = require('../models/type');
 var Line = require('../models/line');
 var Bus = require('../models/bus');
-var Time = require('../models/time');
+//var Time = require('../models/time');
 var Terminal = require('../models/terminal');
 var CityRoute = require('../models/cityroute');
 
 var now = new Date();
+
+var filename = '/CamBus_20141202_final_next.xlsx';
 
 var updateSheetTime = function(records, datas, sheetCB, res){
 	async.waterfall([
@@ -249,7 +251,6 @@ var updateSheetTime = function(records, datas, sheetCB, res){
 							type_id : type._id,
 							updated : now
 						});
-
 						//mid
 						if(record[5] !== undefined){
 							var mid = record[5].split(',');
@@ -275,6 +276,7 @@ var updateSheetTime = function(records, datas, sheetCB, res){
 						
 						datas.buses.push(bus);
 					}
+					bus.times.push(record[7]);
 				}
 			});
 			datas.buses.sort();
@@ -304,6 +306,7 @@ var updateSheetTime = function(records, datas, sheetCB, res){
 				}
 			);
 		},
+		/*/
 		function(callback){
 			//시간표 입력
 			records.forEach(function(record, row){
@@ -328,11 +331,17 @@ var updateSheetTime = function(records, datas, sheetCB, res){
 							&& n.type_id === type._id;
 					});
 					
-					var time = new Time({
-						bus_id : bus._id,
-						dept_t : record[7],
-						updated : now
+					var time = datas.times.find(function(n){
+						return n.bus_id === bus._id;
 					});
+					
+					if(time === undefined){
+						time = new Time({
+							bus_id : bus._id,
+							updated : now
+						});
+					}
+					time.dept_t.push(record[7]);
 					datas.times.push(time);
 				}
 			});
@@ -353,7 +362,7 @@ var updateSheetTime = function(records, datas, sheetCB, res){
 							item._id = object._id;
 							objectCB();
 						}
-					);
+					);					
 				},
 				function(err){
 					console.log('insert times done');
@@ -362,6 +371,7 @@ var updateSheetTime = function(records, datas, sheetCB, res){
 				}
 			);
 		},
+		/**/
 		function(callback){
 			console.log('time sheet done');
 			sheetCB();
@@ -470,6 +480,10 @@ var updateSheetTerminal = function(records, datas, sheetCB, res){
 					var company = datas.companies.find(function(n){
 						return n.name === record[2];
 					});
+					// 하악
+					if(city===undefined || company === undefined){
+						return;	
+					}
 					terminal = new Terminal({
 						terminal_no : record[0],
 						city_id : city._id,
@@ -524,18 +538,14 @@ var updateSheetTerminal = function(records, datas, sheetCB, res){
 					delete upsert._id;
 					Terminal.findOneAndUpdate(
 						{
-							/*/
-							city_id : item.city_id,
-							company_id : item.company_id,
-							name : item.name,
-							latlng : item.latlng
-							/**/
 							terminal_no : item.terminal_no
 						},
 						upsert,
 						{upsert:true},
 						function(err, object){
 							if(err) res.status(500).send(err);
+							//console.log(item);
+							//console.log(object);
 							item._id = object._id;
 							objectCB();
 						}
@@ -559,7 +569,7 @@ router.get('/', function(req, res){
 });
 
 router.post('/', function(req, res){
-	var obj = xlsx.parse(__dirname + '/CamBus_20141202_final.xlsx');
+	var obj = xlsx.parse(__dirname + filename);
 	if(obj){
 		var datas = {
 			cities : [],

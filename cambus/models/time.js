@@ -8,8 +8,8 @@ var TimeSchema = new Schema({
 		ref : 'bus'
 	},
 	dept_t : {
-		type : String,
-		required : true
+		type : [String],
+		required :true
 	},
 	updated : {
 		type : Date,

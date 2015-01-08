@@ -66,11 +66,14 @@ router.get('/:_date', function(req, res){
 			Bus.find().where('updated').gt(_date).exec(function(err, buses){
 				if(err) res.send(err);
 				json['buses'] = buses;
-				callback(null, json);
+				//callback(null, json);
+				res.send(json);
 			});
 		},
+		/*/
 		function(json, callback){
-			Time.find().where('updated').gt(_date).exec(function(err, times){
+			//Time.find().where('updated').gt(_date).exec(function(err, times){
+			Time.find().exec(function(err, times){
 				if(err) res.send(err);
 				json['times'] = times;
 				//console.log(json);
@@ -79,6 +82,7 @@ router.get('/:_date', function(req, res){
 				//callback(null, 'success');
 			});
 		},
+		/**/
 		function(err){
 			if(err) res.status(500).send(err);
 		}

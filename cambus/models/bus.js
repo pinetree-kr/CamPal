@@ -18,6 +18,10 @@ var BusSchema = new Schema({
 		ref : 'type'
 	},
 	mids : [String],
+	times: {
+		type : [String],
+		required : true
+	},
 	price : Number,
 	transfer : Boolean,
 	interational : String,
