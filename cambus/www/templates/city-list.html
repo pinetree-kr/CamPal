@@ -1,0 +1,37 @@
+<section>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h3 class="panel-title">Cities</h3>
+		</div>
+		<div class="panel-body">
+			<table class="table table-striped">
+				<thead>
+					<tr>
+						<th><center>#</center></th>
+						<th>city</th>
+						<th><center>preference</center></th>
+						<th><center>index</center></th>
+						<th><center>updated</center></th>
+						<th><center>misc</center></th>
+					</tr>
+				</thead>
+				<tbody>
+					<tr id="{{city._id}}" ng-repeat="city in cities">
+						<td><center>{{$index+1}}</center></td>
+						<td>{{city.name}}</td>
+						<td><center>{{city.pref}}</center></td>
+						<td><center>{{city.index}}</center></td>
+						<td><center>{{city.updated | date:'MM/dd/yyyy'}}</center></td>
+						<td>
+						  <center>
+							  <button type="button" class="btn btn-default btn-xs" ng-click="editCity(city._id)">
+								  <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+							  </button>
+						  </center>
+						</td>
+					</tr>
+				</tbody>
+			</table>
+		</div>
+	</div>
+</section>

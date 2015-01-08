@@ -2,6 +2,7 @@ var express = require('express');
 //var excelParser = require('excel-parser');
 var xlsx = require('node-xlsx');
 var router = express.Router();
+var async = require('async');
 require('array.prototype.find');
 
 router.get('/', function(req, res){
@@ -9,6 +10,21 @@ router.get('/', function(req, res){
 });
 
 router.post('/', function(req, res){
+	async.waterfall([
+		function(callback){
+			console.log('test1');
+			callback(null);
+		},
+		function(callback){
+			console.log('test2');
+			callback(null);
+		},
+		function(callback){
+			console.log('test3');
+			callback(null);
+		}
+		]);
+	//var filename = req.
 	res.send('non author');
 	var now = new Date();
 	
