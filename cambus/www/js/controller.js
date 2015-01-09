@@ -1,7 +1,18 @@
 var url = "http://130.211.242.214:8080";
 
 angular.module('app.controllers', ['ngRoute'])
-.controller('LineBusListController', function($scope, $http, $location, $routeParams){
+.factory('BusService', function(){
+	var BusService = {};
+	BusService.busInformation = {};
+	BusService.setBusInformation = function(information){
+		BusService.busInformation = information;
+	}
+	BusService.getBusInformation = function(){
+		return BusService.busInformation;
+	}
+	return BusService;
+})
+.controller('LineBusListController', function($scope, $http, $location, $routeParams, BusService){
 	var line_id = $routeParams._id;
 	$http.get(url+'/api/line/bus/'+line_id).
 		success(function(data){
@@ -11,11 +22,14 @@ angular.module('app.controllers', ['ngRoute'])
 		error(function(err){
 			console.log(err);
 		});
-	$scope.edit = function(_id){
-		$location.path('/bus/edit/'+_id);
+	$scope.edit = function(item){
+		BusService.setBusInformation(item);
+		$location.path('/bus/edit');
 	}
 })
-.controller('BusEditController', function($scope, $routeParams, $http, $location){
+.controller('BusEditController', function($scope, $routeParams, $http, $location, BusService){
+	$scope.item = BusService.getBusInformation();
+	console.log($scope.item)
 	/*/
 	$http.get(url+'/api/city').success(function(cities){
 		$scope.cities = cities;

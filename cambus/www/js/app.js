@@ -22,7 +22,7 @@ var app = angular.module('app', ['app.controllers','ngRoute'])
 		templateUrl : 'templates/line-bus-list.html',
 		controller : 'LineBusListController'
 	});
-	$routeProvider.when('/bus/edit/:_id', {
+	$routeProvider.when('/bus/edit', {
 		templateUrl : 'templates/bus-write.html',
 		controller : 'BusEditController'
 	});
