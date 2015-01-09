@@ -18,9 +18,13 @@ var app = angular.module('app', ['app.controllers','ngRoute'])
 		templateUrl : 'templates/line-write.html',
 		controller : 'LineEditController'
 	});
-	$routeProvider.when('/line/select/:_id', {
-		templateUrl : 'templates/bus-list.html',
-		controller : 'BusListController'
+	$routeProvider.when('/line/bus/:_id', {
+		templateUrl : 'templates/line-bus-list.html',
+		controller : 'LineBusListController'
+	});
+	$routeProvider.when('/bus/edit/:_id', {
+		templateUrl : 'templates/bus-write.html',
+		controller : 'BusEditController'
 	});
 
 	$routeProvider.when('/city', {

@@ -1,18 +1,47 @@
 var url = "http://130.211.242.214:8080";
 
 angular.module('app.controllers', ['ngRoute'])
-.controller('BusListController', function($scope, $http, $location, $routeParams){
+.controller('LineBusListController', function($scope, $http, $location, $routeParams){
 	var line_id = $routeParams._id;
 	$http.get(url+'/api/line/bus/'+line_id).
 		success(function(data){
-			
+			$scope.line = data.line;
+			$scope.items = data.buses;
 		}).
 		error(function(err){
 			console.log(err);
 		});
 	$scope.edit = function(_id){
-		$location.path('/line/edit/'+_id);
+		$location.path('/bus/edit/'+_id);
 	}
+})
+.controller('BusEditController', function($scope, $routeParams, $http, $location){
+	/*/
+	$http.get(url+'/api/city').success(function(cities){
+		$scope.cities = cities;
+		$http.get(url+'/api/line/' + $routeParams._id).success(function(line){
+			$scope.item = line;
+			
+			for(var i=0; i<$scope.cities.length; i++){
+				if($scope.cities[i]._id === $scope.item.dept._id){
+					$scope.item.dept = $scope.cities[i];
+				}
+				if($scope.cities[i]._id === $scope.item.dest._id){
+					$scope.item.dest = $scope.cities[i];
+				}
+				if($scope.dept !== undefined && $scope.dest !== undefined){
+					break;
+				}
+			}
+		});
+	});
+	$scope.submit = function(line){
+		$http.put(url+'/api/line/' + $routeParams._id, line).success(function(data){
+			//console.log(data);
+			$location.path('/line');
+		});
+	};
+	/**/
 })
 .controller('LineListController', function($scope, $http, $filter, $location){
 	var orderBy = $filter('orderBy');
@@ -31,8 +60,8 @@ angular.module('app.controllers', ['ngRoute'])
 	$scope.edit = function(_id){
 		$location.path('/line/edit/'+_id);
 	}
-	$scope.select = function(){
-		$location.path('/line/select/'+_id);
+	$scope.select = function(_id){
+		$location.path('/line/bus/'+_id);
 	}
 })
 .controller('LineEditController', function($scope, $routeParams, $http, $location){
