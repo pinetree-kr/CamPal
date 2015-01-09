@@ -10,17 +10,24 @@
 						<th><center>#</center></th>
 						<th>departure</th>
 						<th>destination</th>
-						<th>distance</th>
+						<th><center>distance</center></th>
+						<th><center>updated</center></th>
 						<th><center>misc</center></th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr id="{{line._id}}" ng-repeat="line in lines">
+					<tr id="{{item._id}}" ng-repeat="item in items">
 						<td><center>{{$index+1}}</center></td>
-						<td>{{line.dept.name}}</td>
-						<td>{{line.dest.name}}</td>
-						<td>{{line.distance}}</td>
-						<td></td>
+						<td>{{item.dept.name}}</td>
+						<td>{{item.dest.name}}</td>
+						<td><center>{{item.distance}}</center></td>
+						<td><center>{{item.updated | date:'MM/dd/yyyy'}}</center></td>
+						<td><center>
+							  <button type="button" class="btn btn-default btn-xs" ng-click="edit(item._id)">
+								  <span class="glyphicon glyphicon-wrench" aria-hidden="true"></span>
+							  </button>
+						  </center>
+						 </td>
 					</tr>
 				</tbody>
 			</table>
