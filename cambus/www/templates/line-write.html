@@ -6,14 +6,14 @@
 		<div class="panel-body">
 			<form name="form" ng-submit="submit(item)">
 				<div class="form-group">
-					<label for="dept">Departure</label>
+					<label>Departure</label>
 					<br/>
-					<select ng-options="city.name for city in cities" ng-model="dept"></select>
+					<select ng-options="city.name for city in cities" ng-model="item.dept"></select>
 				</div>
 				<div class="form-group">
-					<label for="dest">Destination</label>
+					<label>Destination</label>
 					<br/>
-					<select ng-options="city.name for city in cities" ng-model="dest"></select>
+					<select ng-options="city.name for city in cities" ng-model="item.dest"></select>
 				</div>
 				<div class="form-group">
 					<label for="distance">Name</label>
