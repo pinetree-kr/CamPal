@@ -1,6 +1,19 @@
 var url = "http://130.211.242.214:8080";
 
 angular.module('app.controllers', ['ngRoute'])
+.controller('BusListController', function($scope, $http, $location, $routeParams){
+	var line_id = $routeParams._id;
+	$http.get(url+'/api/line/bus/'+line_id).
+		success(function(data){
+			
+		}).
+		error(function(err){
+			console.log(err);
+		});
+	$scope.edit = function(_id){
+		$location.path('/line/edit/'+_id);
+	}
+})
 .controller('LineListController', function($scope, $http, $filter, $location){
 	var orderBy = $filter('orderBy');
 	$http.get(url+'/api/line').
@@ -17,6 +30,9 @@ angular.module('app.controllers', ['ngRoute'])
 	}
 	$scope.edit = function(_id){
 		$location.path('/line/edit/'+_id);
+	}
+	$scope.select = function(){
+		$location.path('/line/select/'+_id);
 	}
 })
 .controller('LineEditController', function($scope, $routeParams, $http, $location){
