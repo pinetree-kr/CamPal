@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html ng-app="app">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Memo with MEAN</title>
+<!--script type='text/javascript' src='//code.jquery.com/jquery-2.1.1.js'></script-->
+
+<link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/css/bootstrap.min.css">
+<script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.2/jquery.min.js"></script>
+<script src="//maxcdn.bootstrapcdn.com/bootstrap/3.3.1/js/bootstrap.min.js"></script>
+<!--
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.0-wip/js/bootstrap.min.js"></script>
+-->
+</head>
+<body>
+<div class="row">
+	<div class="col-sm-12">
+		<nav class="navbar navbar-inverse" role="navigation">
+			<div class="navbar-header">
+				<a class="navbar-brand" href="#">CamBus</a>
+			</div>
+			<div class="collapse navbar-collapse">
+				<!--
+				<a href="/#/write"><button type="button" class="btn navbar-btn navbar-right">admin</button></a>
+				-->
+			</div>
+		</nav>
+		<div class="row">
+			<section class="col-sm-3">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a href="/#/line"><button class="btn btn-primary btn-lg btn-block"><h3 class="panel-title">Line-Bus</h3></button></a>
+					</div>
+				</div>
+			</section>
+			<section class="col-sm-3">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a href="/#/city"><button class="btn btn-primary btn-lg btn-block"><h3 class="panel-title">City</h3></button></a>
+					</div>
+				</div>
+			</section>
+			<section class="col-sm-3">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a href="/#/company"><button class="btn btn-primary btn-lg btn-block"><h3 class="panel-title">Company</h3></button></a>
+					</div>
+				</div>
+			</section>
+			<section class="col-sm-3">
+				<div class="panel panel-default">
+					<div class="panel-heading">
+						<a href="/#/type"><button class="btn btn-primary btn-lg btn-block"><h3 class="panel-title">Type</h3></button></a>
+					</div>
+				</div>
+			</section>
+		</div>
+		<div ng-view></div>
+	</div>
+</div>
+<script src="bower_components/angular/angular.min.js"></script>
+<script src="bower_components/angular-route/angular-route.min.js"></script>
+<script src="js/app.js"></script>
+<script src="js/controller.js"></script>
+</body>

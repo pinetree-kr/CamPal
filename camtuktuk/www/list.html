@@ -1,0 +1,14 @@
+<section>
+	<div id="{{city._id}}" class="panel panel-default" ng-repeat="city in cities">
+		<div class="panel-heading">
+			<h3 class="panel-title">{{city.pref}}</h3>
+		</div>
+		<div class="panel-body">
+			<p>{{city.name}}</p>
+			<p>
+				<a href="/#/edit/{{city._id}}" class="btn btn-primary btn-xs">edit</a>
+				<button type="button" class="btn btn-success btn-xs" ng-click="deleteMemo(city._id)">delete</button>
+			</p>
+		</div>
+	</div>
+</section>

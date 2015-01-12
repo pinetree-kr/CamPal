@@ -1,0 +1,18 @@
+<section>
+	<div class="panel panel-default">
+		<div class="panel-heading">
+			<h1 class="panel-title">Type</h1>
+		</div>
+		<div class="panel-body">
+			<form name="form" ng-submit="submit(item)">
+				<div class="form-group">
+					<label for="name">Name</label>
+					<input type="text" name="name" class="form-control" placeholder="Name" required ng-model="item.name">
+				</div>
+				
+				<button type="button" class="btn btn-danger btn-lg" ng-show="item" ng-click="delete(item._id)">지우기</button>
+				<button type="submit" class="btn btn-primary btn-lg" ng-disabled="form.$invalid">확인</button>
+			</form>
+		</div>
+	</div>
+</section>
