@@ -22,21 +22,27 @@ router.get('/:_id', function(req, res){
 });
 
 router.post('/', function(req, res){
-	User.count({phone_no:req.body.phone_no}, function(err, count){
-		if(err) res.send(err);
-		else{
-			if(count==0){
-				var userModel = new User(req.body);
-				userModel.save(function(err, userModel){
-					if(err) res.send(err);
-					else res.send(userModel);
-				});
-			}else{
-				res.send();
-			}
-		}
-	});
-
+	var newUser = City(req.body);
+	if(newUser.phone_no === undefined || newUser.phone_no === ''){
+		res.status(500).send('not allowed');
+	}
+	if(newUser.device_id === undefined || newUser.device_id === ''){
+		res.status(500).send('not allowed');
+	}
+	if(newUser.platform === undefined || newUser.platform === ''){
+		res.status(500).send('not allowed');
+	}
+	var upsert = newUser.toObject();
+	delete upsert._id;
+	delete upsert.joined;
+	User.findOneAndUpdate(
+		{phone_no : newUser.phone_no},
+		upsert,
+		{upsert:true},
+		function(err, result){
+			if(err) res.status(500).send(err);
+			res.send(result);
+		});
 });
 
 router.put('/', function(req, res){

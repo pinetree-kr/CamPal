@@ -2,16 +2,24 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var UserSchema = new Schema({
-	email : {
+	device_id : {
 		type : String,
 		required : true
 	},
-	passwd : {
+	phone_no : {
 		type : String,
-		required : true
+		required : true,
 	},
-	phone_no : String,
-	created : {
+	platform :{
+		type : String,
+		required:true,
+	},
+	facebook : {},
+	tuktuk : {
+		type : Boolean,
+		default : false
+	},
+	joined : {
 		type : Date,
 		default : Date.now
 	}
