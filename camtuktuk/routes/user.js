@@ -9,8 +9,8 @@ router.get('/', function(req, res){
 	});
 });
 
-router.get('/:_id', function(req, res){
-	var number = req.params._id;
+router.get('/:_number', function(req, res){
+	var number = req.params._number;
 	User.findOne({phone_no:number}, function(err, user){
 		if(err) res.status(500).send(err);
 		if(user){
@@ -22,7 +22,7 @@ router.get('/:_id', function(req, res){
 });
 
 router.post('/', function(req, res){
-	var newUser = City(req.body);
+	var newUser = User(req.body);
 	if(newUser.phone_no === undefined || newUser.phone_no === ''){
 		res.status(500).send('not allowed');
 	}
@@ -34,17 +34,35 @@ router.post('/', function(req, res){
 	}
 	var upsert = newUser.toObject();
 	delete upsert._id;
-	delete upsert.joined;
 	User.findOneAndUpdate(
 		{phone_no : newUser.phone_no},
 		upsert,
 		{upsert:true},
 		function(err, result){
 			if(err) res.status(500).send(err);
+			console.log(result);
 			res.send(result);
 		});
 });
-
+router.put('/:_deviceId', function(req, res){
+	var deviceId = req.params._deviceId;
+	var user = new User(req.body);
+	if(deviceId === undefined || deviceId === ''){
+		res.status(500).send('not allowed');
+	}
+	var update = user.toObject();
+	delete update._id;
+	delete update.joined;
+	User.findOneAndUpdate(
+		{device_id : deviceId},
+		update,
+		{upsert:true},
+		function(err, result){
+			if(err) res.status(500).send(err);
+			res.send(result);
+		});
+});
+/*/
 router.put('/', function(req, res){
 	User.update(
 			{
@@ -60,7 +78,7 @@ router.put('/', function(req, res){
 				res.send();
 			});
 });
-
+/**/
 router.delete('/:_id', function(req, res){
 	var _id = req.params._id;
 	User.remove({device_id:_id}, function(err){
