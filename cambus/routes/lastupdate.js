@@ -17,6 +17,45 @@ var Time = require('../models/time');
 router.get('/:_date', function(req, res){
 	var _date = req.params._date;
 	if(_date<0) res.status(500).send('not allowed');
+
+	async.parallel(
+		[
+			function(callback){
+				City.find().where('updated').gt(_date).exec(callback);
+			},
+			function(callback){
+				Type.find().where('updated').gt(_date).exec(callback);
+			},
+			function(callback){
+				Company.find().where('updated').gt(_date).exec(callback);
+			},
+			function(callback){
+				Terminal.find().where('updated').gt(_date).exec(callback);
+			},
+			function(callback){
+				Line.find().where('updated').gt(_date).exec(callback);
+			},
+			function(callback){
+				Bus.find().where('updated').gt(_date).exec(callback);
+			},
+			function(callback){
+				CityRoute.find().where('updated').gt(_date).exec(callback);
+			}
+		],
+		function(err, results){
+			if(err) res.status(500).send(err);
+			var datas = {
+				cities : results[0],
+				types : results[1],
+				companies : results[2],
+				terminals : results[3],
+				lines : results[4],
+				buses : results[5],
+				cityroutes : results[6]
+			}
+			res.send(datas);
+		});
+/*/
 	async.waterfall([
 		function(callback){
 			City.find().where('updated').gt(_date).exec(function(err, cities){
@@ -70,29 +109,12 @@ router.get('/:_date', function(req, res){
 				res.send(json);
 			});
 		},
-		/*/
-		function(json, callback){
-			//Time.find().where('updated').gt(_date).exec(function(err, times){
-			Time.find().exec(function(err, times){
-				if(err) res.send(err);
-				json['times'] = times;
-				//console.log(json);
-				res.send(json);
-				//console.log(json.cityroutes);
-				//callback(null, 'success');
-			});
-		},
-		/**/
 		function(err){
 			if(err) res.status(500).send(err);
 		}
-	/*/,
-		function(err, result){
-			if(err) res.status(500).send(err);
-			res.send(result);
-		}
-		/**/
+	
 	]);
+/**/
 });
 
 module.exports = router;
