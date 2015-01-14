@@ -3,7 +3,12 @@ var express = require('express');
 var router = express.Router();
 
 var Bus = require('../models/bus');
-
+/*/
+var Line = require('../models/line');
+var Company = require('../models/company');
+var City = require('../models/city');
+var Type = require('../models/type');
+/**/
 router.get('/', function(req, res){
 	Bus.find(function(err, buses){
 		if(!err){
@@ -13,11 +18,14 @@ router.get('/', function(req, res){
 });
 router.get('/:_id', function(req, res){
 	var _id = req.params._id
-	Bus.findOne({_id:_id}, function(err, bus){
-		if(!err){
-			res.send(bus);
-		}
-	});
+	Bus.findOne({_id:_id}).
+		populate('company_id','name').
+		populate('type_id','name').
+		exec(function(err, bus){
+			if(!err){
+				res.send(bus);
+			}
+		});
 });
 router.put('/:_id', function(req, res){
 	var id = req.params._id;
