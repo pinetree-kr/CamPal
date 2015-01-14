@@ -2,15 +2,37 @@ var url = "http://130.211.242.214:8080";
 
 angular.module('app.controllers', ['ngRoute'])
 .factory('BusService', function(){
-	var BusService = {};
-	BusService.busInformation = {};
-	BusService.setBusInformation = function(information){
-		BusService.busInformation = information;
+	var BusService;
+	
+	return {
+		update : function(item){
+			BusService = {
+				_id : item._id,
+				line_id : item.line_id,
+				company_id : item.company_id,
+				type_id : item.type_id,
+				times : item.times
+			}
+			/*/
+			BusService._id = item._id;
+			BusService.line_id = item.line_id;
+			BusService.company_id = item.company_id;
+			BusService.type_id = item.type_id;
+			BusService.times = item.times;
+			/**/
+		},
+		get : function(id){
+			if(BusService===null){
+				$http.get(
+					url+'/api/bus/'+id).
+					success(function(result){
+						return result;
+					});
+			}else{
+				return BusService;
+			}
+		}
 	}
-	BusService.getBusInformation = function(){
-		return BusService.busInformation;
-	}
-	return BusService;
 })
 .controller('LineBusListController', function($scope, $http, $location, $routeParams, BusService){
 	var line_id = $routeParams._id;
@@ -23,12 +45,12 @@ angular.module('app.controllers', ['ngRoute'])
 			console.log(err);
 		});
 	$scope.edit = function(item){
-		BusService.setBusInformation(item);
-		$location.path('/bus/edit');
+		BusService.update(item);
+		$location.path('/bus/edit/'+item._id);
 	}
 })
 .controller('BusEditController', function($scope, $routeParams, $http, $location, BusService){
-	$scope.item = BusService.getBusInformation();
+	$scope.item = BusService.get($routeParams._id);
 	//console.log($scope.item)
 	/*/
 	$http.get(url+'/api/city').success(function(cities){
@@ -56,6 +78,9 @@ angular.module('app.controllers', ['ngRoute'])
 		});
 	};
 	/**/
+	$scope.submit = function(bus){
+		console.log(bus.times);
+	}
 })
 .controller('LineListController', function($scope, $http, $filter, $location){
 	var orderBy = $filter('orderBy');
