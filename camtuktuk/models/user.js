@@ -21,7 +21,7 @@ var UserSchema = new Schema({
 	},
 	joined : {
 		type : Date,
-		default : Date.now
+		//default : Date.now
 	}
 });
 module.exports = mongoose.model('user', UserSchema);

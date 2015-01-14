@@ -22,63 +22,60 @@ router.get('/:_number', function(req, res){
 });
 
 router.post('/', function(req, res){
-	var newUser = User(req.body);
-	if(newUser.phone_no === undefined || newUser.phone_no === ''){
+	var user = req.body;
+	
+	if(user.phone_no === undefined 
+		|| user.device_id === undefined 
+		|| user.platform === undefined){
 		res.status(500).send('not allowed');
 	}
-	if(newUser.device_id === undefined || newUser.device_id === ''){
-		res.status(500).send('not allowed');
+	var data = {
+		phone_no : user.phone_no,
+		device_id : user.device_id,
+		platform : user.platform,
+		joined : new Date()
 	}
-	if(newUser.platform === undefined || newUser.platform === ''){
-		res.status(500).send('not allowed');
-	}
-	var upsert = newUser.toObject();
-	delete upsert._id;
+
 	User.findOneAndUpdate(
-		{phone_no : newUser.phone_no},
-		upsert,
+		{phone_no : user.phone_no},
+		data,
 		{upsert:true},
 		function(err, result){
 			if(err) res.status(500).send(err);
-			console.log(result);
+			//console.log(result);
 			res.send(result);
 		});
 });
+
 router.put('/:_deviceId', function(req, res){
 	var deviceId = req.params._deviceId;
-	var user = new User(req.body);
-	if(deviceId === undefined || deviceId === ''){
+	if(deviceId === undefined){
 		res.status(500).send('not allowed');
 	}
-	var update = user.toObject();
-	delete update._id;
-	delete update.joined;
+	var user = req.body;
+	var data = {};
+	if(user.phone_no !== undefined){
+		data.phone_no = user.phone_no;
+	}
+	if(user.platform !== undefined){
+		data.platform = user.platform;
+	}
+	if(user.facebook !== undefined){
+		data.facebook = user.facebook;
+	}
+	if(user.tuktuk !== undefined){
+		data.tuktuk = user.tuktuk;
+	}
+	
 	User.findOneAndUpdate(
 		{device_id : deviceId},
-		update,
-		{upsert:true},
+		{$set:data},
 		function(err, result){
 			if(err) res.status(500).send(err);
 			res.send(result);
 		});
 });
-/*/
-router.put('/', function(req, res){
-	User.update(
-			{
-				device_id : req.body.device_id
-				//phone_no : req.body.phone_no
-			},{
-				$set:{
-					//device_id : ObjectId(req.body.device_id)
-					phone_no : req.body.phone_no
-				}
-			},function(err){
-				if(err) res.send(err);
-				res.send();
-			});
-});
-/**/
+
 router.delete('/:_id', function(req, res){
 	var _id = req.params._id;
 	User.remove({device_id:_id}, function(err){
