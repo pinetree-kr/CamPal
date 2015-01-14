@@ -14,6 +14,7 @@
 						<th><center>#</center></th>
 						<th>company</th>
 						<th>type</th>
+						<th><center>price</center></th>
 						<th><center>mids</center></th>
 						<th><center>times</center></th>
 						<th><center>updated</center></th>
@@ -25,6 +26,9 @@
 						<td><center>{{$index+1}}</center></td>
 						<td>{{item.company_id.name}}</td>
 						<td>{{item.type_id.name}}</td>
+						<td>
+							<center>{{item.price}}</center>
+						</td>
 						<td>
 							<center ng-repeat="mid in item.mids">{{mid}}</center>
 						</td>

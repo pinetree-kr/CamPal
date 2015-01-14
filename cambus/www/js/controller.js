@@ -29,7 +29,7 @@ angular.module('app.controllers', ['ngRoute'])
 })
 .controller('BusEditController', function($scope, $routeParams, $http, $location, BusService){
 	$scope.item = BusService.getBusInformation();
-	console.log($scope.item)
+	//console.log($scope.item)
 	/*/
 	$http.get(url+'/api/city').success(function(cities){
 		$scope.cities = cities;
