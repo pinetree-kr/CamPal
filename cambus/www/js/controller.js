@@ -1,37 +1,37 @@
 var url = "http://130.211.242.214:8080";
 
 angular.module('app.controllers', ['ngRoute'])
-.factory('BusService', function(){
+.factory('BusService', function($http){
 	var BusService;
-	
-	return {
-		update : function(item){
-			BusService = {
-				_id : item._id,
-				line_id : item.line_id,
-				company_id : item.company_id,
-				type_id : item.type_id,
-				times : item.times
-			}
-			/*/
-			BusService._id = item._id;
-			BusService.line_id = item.line_id;
-			BusService.company_id = item.company_id;
-			BusService.type_id = item.type_id;
-			BusService.times = item.times;
-			/**/
-		},
-		get : function(id){
-			if(BusService===null){
-				$http.get(
-					url+'/api/bus/'+id).
-					success(function(result){
-						return result;
-					});
-			}else{
-				return BusService;
-			}
+
+	function update(item, line_id){
+		BusService = {
+			_id : item._id,
+			line_id : item.line_id,
+			company_id : item.company_id,
+			type_id : item.type_id,
+			mids : item.mids,
+			times : item.times
 		}
+		if(line_id !== undefined){
+			BusService.line_id = line_id;
+		}
+	}
+	function get(id, callback){
+		if(BusService===undefined){
+			$http.get(
+				url+'/api/bus/'+id).
+				success(function(result){
+					update(result);
+					callback(BusService);
+				})
+		}else{
+			callback(BusService);
+		}
+	}
+	return {
+		update : update,
+		get : get
 	}
 })
 .controller('LineBusListController', function($scope, $http, $location, $routeParams, BusService){
@@ -45,41 +45,31 @@ angular.module('app.controllers', ['ngRoute'])
 			console.log(err);
 		});
 	$scope.edit = function(item){
-		BusService.update(item);
+		BusService.update(item, line_id);
 		$location.path('/bus/edit/'+item._id);
 	}
 })
 .controller('BusEditController', function($scope, $routeParams, $http, $location, BusService){
-	$scope.item = BusService.get($routeParams._id);
-	//console.log($scope.item)
-	/*/
-	$http.get(url+'/api/city').success(function(cities){
-		$scope.cities = cities;
-		$http.get(url+'/api/line/' + $routeParams._id).success(function(line){
-			$scope.item = line;
-			
-			for(var i=0; i<$scope.cities.length; i++){
-				if($scope.cities[i]._id === $scope.item.dept._id){
-					$scope.item.dept = $scope.cities[i];
-				}
-				if($scope.cities[i]._id === $scope.item.dest._id){
-					$scope.item.dest = $scope.cities[i];
-				}
-				if($scope.dept !== undefined && $scope.dest !== undefined){
-					break;
-				}
-			}
+	BusService.get($routeParams._id, function(item){
+		$scope.item = item;
+	})
+	$scope.addMid = function(){
+		$scope.item.mids.push("");
+	}
+	$scope.addTime = function(){
+		$scope.item.times.push("");
+	}
+	$scope.removeMid = function(idx){
+		//console.log(idx);
+		$scope.item.mids.splice(idx,1);
+	}
+	$scope.removeTime = function(idx){
+		$scope.item.times.splice(idx,1);
+	}
+	$scope.submit = function(item){
+		$http.put(url+'/api/bus/' + $routeParams._id, $scope.item).success(function(data){
+			$location.path('/line/bus/'+$scope.item.line_id);
 		});
-	});
-	$scope.submit = function(line){
-		$http.put(url+'/api/line/' + $routeParams._id, line).success(function(data){
-			//console.log(data);
-			$location.path('/line');
-		});
-	};
-	/**/
-	$scope.submit = function(bus){
-		console.log(bus.times);
 	}
 })
 .controller('LineListController', function($scope, $http, $filter, $location){

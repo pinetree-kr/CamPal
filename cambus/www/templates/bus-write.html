@@ -7,23 +7,44 @@
 			<form name="form" ng-submit="submit(item)">
 				<div class="form-group">
 					<label for="company">Company</label>
-					<input type="text" name="company" class="form-control" ng-model="item.company_id.name" readonly="readonly" />
+					<input type="text" name="company" class="form-control" ng-model="item.company_id.name" disabled/>
 				</div>
 				<div class="form-group">
 					<label for="type">Type</label>
-					<input type="text" name="type" class="form-control" ng-model="item.type_id.name" readonly="readonly" />
+					<input type="text" name="type" class="form-control" ng-model="item.type_id.name" disabled/>
 				</div>
 				<div class="form-group">
 					<label for="price">Price</label>
 					<input type="number" name="price" class="form-control" ng-model="item.price" />
 				</div>
 				<div class="form-group">
-					<label for="mids">Mids</label>
-					<input type="text" name="type" class="form-control" ng-model="item.mids" />
+					<label>Mids</label>
+					<button type="button" class="btn btn-link btn-xs" ng-click="addMid()">
+						<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+					</button>
+					<div class="input-group" ng-repeat="mid in item.mids track by $index" style="margin-bottom:2px;" >
+						<span class="input-group-btn">
+							<button class="btn btn-warning" type="button" ng-click="removeMid($index)">
+								<span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+							</button>
+						</span>
+						<input type="text" class="form-control" ng-model="item.mids[$index]" placeholder="City name"/>
+					</div>
+					
 				</div>
 				<div class="form-group">
-					<label for="times">Times</label>
-					<input type="text" name="times" class="form-control" ng-model="item.times" />
+					<label>Times</label>
+					<button type="button" class="btn btn-link btn-xs" ng-click="addTime()">
+						<span class="glyphicon glyphicon-plus" aria-hidden="true"></span>
+					</button>
+					<div class="input-group" ng-repeat="time in item.times track by $index" style="margin-bottom:2px;" >
+						<span class="input-group-btn">
+							<button class="btn btn-warning" type="button" ng-click="removeTime($index)">
+								<span class="glyphicon glyphicon-minus" aria-hidden="true"></span>
+							</button>
+						</span>
+						<input type="text" class="form-control" ng-model="item.times[$index]" ng-pattern="/^\d{2}:\d{2}$/" placeholder="HH:MM"/>
+					</div>
 				</div>
 				
 				<button type="submit" class="btn btn-primary btn-lg" ng-disabled="form.$invalid">확인</button>
