@@ -11,7 +11,8 @@ angular.module('app.controllers', ['ngRoute'])
 			company_id : item.company_id,
 			type_id : item.type_id,
 			mids : item.mids,
-			times : item.times
+			times : item.times,
+			price : item.price
 		}
 		if(line_id !== undefined){
 			BusService.line_id = line_id;
