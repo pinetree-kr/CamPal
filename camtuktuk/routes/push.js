@@ -9,8 +9,7 @@ function randomInt(low, high){
 }
 
 router.get('/', function(req, res){
-	res.send('this is gcm module');
-	
+	res.send('this is gcm module');	
 });
 router.post('/', function(req, res){
 	console.log(req.body);

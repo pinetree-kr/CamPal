@@ -12,7 +12,6 @@ app.use(bodyParser.urlencoded());
 app.use(cors());
 app.use('/api', require('./routes/api'));
 
-
 process.on('uncaughtException', function(err){
 	console.log('CaughtException:'+err);
 });

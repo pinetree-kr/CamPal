@@ -33,16 +33,16 @@ router.put('/:_id', function(req, res){
 	var bus = req.body;
 	var data = {};
 
-	if(bus.mids !== undefined){
+	if(bus.mids !== undefined && bus.mids !== null){
 		data.mids = bus.mids;
 	}
-	if(bus.times !== undefined){
+	if(bus.times !== undefined && bus.times !== null){
 		data.times = bus.times;
 	}
-	if(bus.price !== undefined){
+	if(bus.price !== undefined && bus.price !== null){
 		data.price = bus.price;
 	}
-	if(bus.seat !== undefined){
+	if(bus.seat !== undefined && bus.seat !== null){
 		data.seat = bus.seat;
 	}
 	data.updated = new Date();

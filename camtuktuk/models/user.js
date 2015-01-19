@@ -12,13 +12,13 @@ var UserSchema = new Schema({
 		unique : true,
 		required : true,
 	},
-	platform :{
-		type : String,
-		required:true,
+	platform : String,
+	location : {
+		lat : Number,
+		lng : Number
 	},
-	joined : {
-		type : Date,
-		//default : Date.now
-	}
+	token : String,
+	expires : Number,
+	joined : Number
 });
 module.exports = mongoose.model('user', UserSchema);
