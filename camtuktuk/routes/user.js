@@ -176,80 +176,147 @@ router.post('/join', tokenAuth, function(req, res){
 	// 서버에 저장한다
 	function(err, results){
 		var TukTuk = require('../models/tuktuk');
-		//console.log(results.facebook.id);
-		TukTuk.findOneAndUpdate({
-				id : results.id
-			},
-			{$set : results},
-			{upsert : true},
-			function(err, item){
-				if(err){
-					return res.json(500,{
-						error : {
-							message : err.message,
-							type : err.type,
-							code : 213
+
+		TukTuk.findOne({id:results.id},function(err, object){
+			if(!err){
+				// update
+				if(object){
+					object.update({$set:results}, function(err, item){
+						if(err){
+							return res.json(500,{
+								error : {
+									message : err.message,
+									type : err.type,
+									code : 216
+								}
+							});
+						}else{
+							console.log('update');
+							console.log(item);
+							return res.json(item);
+						}
+					})
+				}
+				// save
+				else{
+					var tuktuk = TukTuk(results);
+					tuktuk.joined = moment().valueOf();
+					tuktuk.save(function(err, item){
+						if(!err){
+							console.log('insert');
+							console.log(item);
+							return res.json(item);
+						}else{
+							return res.json(500,{
+								error : {
+									message : err.message,
+									type : err.type,
+									code : 215
+								}
+							});
 						}
 					});
-				}else{
-					console.log(item);
-					return res.json(item);
-					/*/
-					if(item){
-						item.update(results, function(err, result){
-							if(err){
-								return res.json(500, {
-									error : {
-										message : err.message,
-										type : err.type,
-										code : 214
-									}
-								});
-							}else{
-								return res.json({
-									update : result
-								});
-							}
-						});
-					}
-					// 추가
-					else{
-						var tuktuk = new TukTuk(results);
-						tuktuk.joined = moment().valueOf();
-						tuktuk.save(function(err, result){
-							if(err){
-								return res.json(500,{
-									error : {
-										message : err.message,
-										type : err.type,
-										code : 216
-									}
-								});
-							}else{
-								if(result){
-									return res.json(result);
-								}else{
-									return res.json(400,{
-										error : {
-											message : 'Cannot insert the new tuktuk',
-											type : 'insert exception',
-											code : 217
-										}
-									});
-								}
-							}
-						});
-					}
-					/**/
 				}
-			});
+			}else{
+				return res.json(500,{
+					error : {
+						message : err.message,
+						type : err.type,
+						code : 217
+					}
+				});
+			}
+		});
 	});
 });
 
 // 300 사용자 정보 가져오기
 router.get('/:_id', tokenAuth, function(req, res){
 	var id = req.params._id;
-	//console.log(req.params);
+	
+	async.parallel([
+		function(callback){
+			User.findOne({_id:id}, function(err, item){
+				if(err){
+					return res.json(400, {
+						error : {
+							message : err.message,
+							type : 'query exception',
+							code : 301
+						}
+					});
+				}else{
+					callback(null, item);
+				}
+			});
+		},
+		function(callback){
+			var TukTuk = require('../models/tuktuk');
+			TukTuk.findOne({user:id}, function(err, item){
+				if(err){
+					return res.json(500, {
+						error : {
+							message : err.message,
+							type : err.type,
+							code : 305
+						}
+					});
+				}else{
+					callback(null, item);
+				}
+			});
+		},
+		function(callback){
+			var Call = require('../models/call');
+			Call.findOne({
+				$or:[{caller:id},{callee:id}]
+			},function(err, item){
+				if(err){
+					return res.json(500, {
+						error : {
+							message : err.message,
+							type : err.type,
+							code : 305
+						}
+					});
+				}else{
+					callback(null, item);
+				};
+			});
+		}
+	],
+	function(err, results){
+		if(err){
+			return res.json(500,{
+				error : {
+					message :err.message,
+					type : err.type,
+					code : 308
+				}
+			});
+		}else{
+			if(results[0]===null){
+				return res.json(400,{
+					error : {
+						message : 'Invalid user',
+						type : 'not found exception',
+						code : 303
+					}
+				});
+			}else{
+				var data = {
+					user : results[0]
+				};
+				if(results[1]!==null)
+					data.tuktuk = results[1];
+				if(results[2]!==null)
+					data.user.call = results[2]._id;
+
+				return res.json(data);
+			}
+		}
+	});
+	/*/
 	User.findOne({_id : id}, function(err, user){
 		if(err){
 			return res.json(400, {
@@ -297,6 +364,7 @@ router.get('/:_id', tokenAuth, function(req, res){
 			}
 		}
 	});
+	/**/
 });
 
 router.put('/:_id', tokenAuth, function(req, res){

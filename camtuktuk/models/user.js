@@ -17,6 +17,10 @@ var UserSchema = new Schema({
 		lat : Number,
 		lng : Number
 	},
+	call : {
+		type : Schema.Types.ObjectId,
+		ref : 'call'
+	},
 	token : String,
 	expires : Number,
 	joined : Number

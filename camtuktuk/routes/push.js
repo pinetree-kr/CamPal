@@ -16,9 +16,10 @@ router.post('/', function(req, res){
 	var message = new gcm.Message({
 		// for prevent collapse
 		collapseKey:''+randomInt(1,100),
+		//collapseKey : 'tuktuk_call',
 		// when device is screenon, true:off, false:on
-		delayWhileIdle:false,
-		timeToLive:3,
+		delayWhileIdle:true,
+		timeToLive:60*60*24,//하루
 		data:{
 			'message' : req.body.message,
 			'msgcnt' : 2,
