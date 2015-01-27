@@ -8,7 +8,9 @@ var async = require('async');
 var User = require('../models/user');
 var TukTuk = require('../models/tuktuk');
 var secret = 'photobypinetree';
-var tokenAuth = require('../routes/auth');
+var auth = require('./auth');
+
+var tokenAuth = auth.tokenAuth; 
 
 // 100 : 디바이스 인증
 router.post('/auth', function(req, res){
@@ -22,7 +24,6 @@ router.post('/auth', function(req, res){
 			}
 		});
 	}
-
 	async.waterfall([
 		// 번호 사용자 여부 확인
 		function(callback){
@@ -54,7 +55,10 @@ router.post('/auth', function(req, res){
 							else{
 								user.update(
 									{
-										$set:{device_id : params.device_id}
+										$set:{
+											device_id : params.device_id,
+											platform:params.platform
+										}
 									},
 									function(result){
 										return res.json({
@@ -119,7 +123,49 @@ router.post('/auth', function(req, res){
 	]);
 });
 
-// 200 새로운 드라이버 등록
+router.post('/join', tokenAuth, function(req, res){
+	var params = req.body;
+	var user_id = req.user_id;
+	var TukTuk = require('../models/tuktuk');
+	TukTuk.findOne(
+		{user:user_id},
+		function(err, item){
+			if(err){
+				return res.json(500,{
+					error : {
+						message : err.message,
+						type : err.type,
+						code : 216
+					}
+				});
+			}else{
+				if(!item){
+					var tuktuk = new TukTuk({
+						name : params.name,
+						user : user_id,
+						joined : moment().valueOf()
+					});
+					tuktuk.save(function(err, result){
+						if(err){
+							return res.json(500,{
+								error : {
+									message : err.message,
+									type : err.type,
+									code : 217
+								}
+							});
+						}else{
+							return res.json(result);
+						}
+					});
+				}else{
+					return res.json(item);
+				}
+			}
+		});
+});
+/*/
+// 200 새로운 드라이버 등록(facebook)
 router.post('/join', tokenAuth, function(req, res){
 	var params = req.body;
 	if(params._id === undefined 
@@ -192,7 +238,7 @@ router.post('/join', tokenAuth, function(req, res){
 							});
 						}else{
 							console.log('update');
-							console.log(item);
+							//console.log(item);
 							return res.json(item);
 						}
 					})
@@ -204,7 +250,7 @@ router.post('/join', tokenAuth, function(req, res){
 					tuktuk.save(function(err, item){
 						if(!err){
 							console.log('insert');
-							console.log(item);
+							//console.log(item);
 							return res.json(item);
 						}else{
 							return res.json(500,{
@@ -229,11 +275,10 @@ router.post('/join', tokenAuth, function(req, res){
 		});
 	});
 });
-
+/**/
 // 300 사용자 정보 가져오기
 router.get('/:_id', tokenAuth, function(req, res){
 	var id = req.params._id;
-	
 	async.parallel([
 		function(callback){
 			User.findOne({_id:id}, function(err, item){
@@ -252,7 +297,7 @@ router.get('/:_id', tokenAuth, function(req, res){
 		},
 		function(callback){
 			var TukTuk = require('../models/tuktuk');
-			TukTuk.findOne({user:id}, function(err, item){
+			TukTuk.findOne({user:id,valid:true}, function(err, item){
 				if(err){
 					return res.json(500, {
 						error : {
@@ -310,8 +355,7 @@ router.get('/:_id', tokenAuth, function(req, res){
 				if(results[1]!==null)
 					data.tuktuk = results[1];
 				if(results[2]!==null)
-					data.user.call = results[2]._id;
-
+					data.call = results[2]._id;
 				return res.json(data);
 			}
 		}

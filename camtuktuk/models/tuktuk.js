@@ -7,15 +7,21 @@ var TukTukSchema = new Schema({
 		required : true,
 		ref : 'user'
 	},
-	id : Number,
+	latlng : {
+		lat : Number,
+		lng : Number
+	},
 	name : String,
-	email : String,
-	gender : String,
 	valid : {
 		type : Boolean,
 		required : true,
 		default : false,
 	},
-	joined : Number
+	joined : Number,
+	/*/
+	id : Number,
+	email : String,
+	gender : String,
+	/**/
 });
 module.exports = mongoose.model('tuktuk', TukTukSchema);

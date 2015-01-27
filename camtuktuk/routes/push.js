@@ -12,7 +12,7 @@ router.get('/', function(req, res){
 	res.send('this is gcm module');	
 });
 router.post('/', function(req, res){
-	console.log(req.body);
+	//console.log(req.body);
 	var message = new gcm.Message({
 		// for prevent collapse
 		collapseKey:''+randomInt(1,100),

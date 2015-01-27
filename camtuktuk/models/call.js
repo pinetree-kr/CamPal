@@ -31,7 +31,7 @@ var CallSchema = new Schema({
 		latlng : {}
 	},	
 	created : {
-		type : Date,
+		type : Number,
 		required : true
 	}
 });

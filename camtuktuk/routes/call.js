@@ -3,13 +3,35 @@ var router = express.Router();
 var Call = require('../models/call');
 var moment = require('moment');
 var async = require('async');
-var tokenAuth = require('./auth');
+var auth = require('./auth');
 
+var tokenAuth = auth.tokenAuth;
 
 function randomInt(low, high){
 	return Math.floor(Math.random() * (high - low) + low);
 }
-
+function push2user(data, user_id, callback){
+	var User = require('../models/user');
+	User.findOne({_id:user_id}, function(err, user){
+		if(err){
+			return res.json(400,{
+				error : {
+					message : err.message,
+					type : err.type,
+					code :856
+				}
+			});
+		}else{
+			var users = [];
+			users.push(user.device_id);
+			if(user.platform === 'Android'){
+				pushGCM(data, users, callback);
+			}else if(user.platform === 'iOS'){
+				pushAPN(data, users, callback);
+			}
+		}
+	});
+}
 function push2tuktuk(data, callback){
 	var TukTuk = require('../models/tuktuk');
 	async.parallel([
@@ -34,7 +56,7 @@ function push2tuktuk(data, callback){
 				})
 				.exec(function(err, items){
 					items = items.filter(function(item){
-						return item.user.platform !== 'Android';
+						return item.user.platform === 'iOS';
 					});
 					cb(err, items);
 				});
@@ -42,32 +64,96 @@ function push2tuktuk(data, callback){
 	], function(err, results){
 		if(err){callback(err, null)}
 		else{
-			pushGCM(
-				data,
-				results[0],
-				callback
-			);
+			var gcmIds = [];
+			var apnIds = [];
+			
+			for(var i=0; i<results[0].length; i++){
+				gcmIds.push(results[0][i].user.device_id);
+			}
+			for(var i=0; i<results[1].length; i++){
+				apnIds.push(results[1][i].user.device_id);
+			}
+			
+			async.parallel([
+				function(cback){
+					pushGCM(
+						data,
+						gcmIds,
+						cback
+					);
+				},
+				function(cback){
+					pushAPN(
+						data,
+						apnIds,
+						cback
+					);
+				}
+			], callback);
 		}
 	});
 };
+// IOS푸싱
+function pushAPN(data, users, callback){
+	var apn = require('apn');
+	//var tokens = [];
+	if(users.length>0){	
+		var opts = {
+			gateway : 'gateway.sandbox.push.apple.com',
+			cert : '../cert/devcert.pem',
+			key : '../cert/devkey.pem',
+			//errorCallback: callback
+		};
+		
+		var apnConnection = new apn.Connection(opts);
+		apnConnection.on('socektError' , function(){
+			callback({
+				error : {
+					message : 'socket error',
+					type : 'socket exception',
+					code : 868
+				}
+			});
+		});
+		apnConnection.on('transmitted' , function(n, d){
+			callback(null, n);
+		});
+		apnConnection.on('timeout' , function(){
+			callback({
+				error : {
+					message : 'timeout',
+					type : 'timeout exception',
+					code : 869
+				}
+			});
+		});
 
+		var note = new apn.Notification();
+		note.badge = 1;
+		note.alert = data.message;
+		note.sound = 'dong.aiff'
+		note.payload = data;
+		for(var i=0; i<users.length; i++){
+			apnConnection.pushNotification(note, users[i]);
+		}
+
+		
+	}else{
+		callback();
+	}
+}
+
+//안드로이드 푸싱
 function pushGCM(data, users, callback){
-	var regIds = [];
-	for(var i=0; i<users.length; i++){
-		regIds.push(users[i].user.device_id);
-	};
 	var gcm = require('node-gcm');
 	var sender = new gcm.Sender('AIzaSyBI9GCyGNWpNbxSGzzfgB9bz5dUM-qnLMc');
-	//var sender = new gcm.Sender('737566265150');
 	var message = new gcm.Message({
 		collapseKey : ''+randomInt(1,100),
 		delayWhileIdle : false,
 		timeToLive : 10,
 		data : data,
-		//event:'message'
 	});
-	//console.log(regIds);
-	sender.send(message, regIds, 3, function(err, result){
+	sender.send(message, users, 3, function(err, result){
 		if(err){
 			callback({
 				message: err,
@@ -80,16 +166,37 @@ function pushGCM(data, users, callback){
 }
 /**/
 router.get('/test/:id', function(req, res){
-	var data = [{
-		user : {
-			device_id : req.params.id
+	var id = req.params.id;
+	var data = req.query;
+	var User = require('../models/user');
+	User.findOne({device_id:id}, function(err, user){
+		if(err){
+			res.json(400,{
+				error:{
+					message : err.message,
+					type : err.type,
+					code : 899
+				}
+			});
+		}else{
+			var users = [];
+			//console.log(user);
+			users.push(user.device_id);
+			if(user.platform==='Android'){
+				pushGCM(data, users, function(err, result){
+					if(err) res.send(err);
+					res.send(result);
+				});
+			}else if(user.platform==='iOS'){
+				pushAPN(data, users, function(err, result){
+					if(err) res.send(err);
+					res.send(result);
+				});
+			}
 		}
-	}];
-	pushGCM(req.query,data,function(err, result){
-		if(err) res.send(err);
-		res.send(result);
-	});
+	});	
 });
+/**/
 router.get('/test', function(req, res){
 	var data = req.query;
 	push2tuktuk({
@@ -111,7 +218,6 @@ router.get('/test', function(req, res){
 	});
 });
 /**/
-/**/
 router.get('/', tokenAuth, function(req, res){
 	var params = req.query;
 	Call.find({status:'request'})
@@ -130,47 +236,143 @@ router.get('/', tokenAuth, function(req, res){
 		}
 	});
 });
-/**/
-router.get('/:_type', tokenAuth, function(req, res){
-	var type = req.params._type;
-	var params = req.query;
-	var opts = {
-		status : {
-			$ne : 'done'
-		}
-	};
-	//신청자
-	if(type === 'caller')
-		opts.caller = params.user;
-	//응답자
-	else if(type === 'callee')
-		opts.callee = params.user;
-	Call.findOne(
-		opts,
-		function(err, item){
-			if(err){
-				return res.json(500,{
+
+router.get('/:call_id', tokenAuth,/**/ function(req, res){
+	var _id = req.params.call_id;
+	Call.findOne({
+		_id : _id
+	},function(err, item){
+		if(err){
+			return res.json(500,{
+				error : {
+					message : err.message,
+					type : err.type,
+					code : 612
+				}
+			});
+		}else{
+			if(item){
+				return res.json(item);
+			}else{
+				return res.json(400,{
 					error : {
-						message : err.message,
-						type : err.type,
-						code : 612
+						message : 'Request for Call has not found',
+						type : 'not found exception',
+						code : 613
+					}
+				});
+			}
+		}
+	});
+});
+
+router.put('/:call_id/accept', tokenAuth,/**/ function(req, res){
+	var call_id = req.params.call_id;
+	var user_id = req.user_id;
+	if(user_id === undefined || user_id === null){
+		return res.json(400, {
+			error : {
+				message : 'Invalid User to accept the Call',
+				type : 'request exception',
+				code : 711
+			}
+		});
+	}
+	Call.findOne({_id:call_id}, function(err, item){
+		if(err){
+			return res.json(500,{
+				error : {
+					message : err.message,
+					type : err.type,
+					code : 712
+				}
+			});
+		}else{
+			if(item){
+				item.update({$set:{status:'response'}}, function(err,result){
+					if(err){
+						return res.json(500,{
+							error : {
+								message : err.message,
+								type : err.type,
+								code : 713
+							}
+						});
+					}else{
+						push2user({
+							message : 'The call for TukTuk has been responsed',
+							title : 'CamTukTuk',
+							call : item._id
+						}, item.caller, function(err, success){
+							if(err){
+								return res.json(400,{
+									error : {
+										message : err.message,
+										type : err.type,
+										code : 857
+									}
+								});
+							}else{
+								console.log(success);
+								return res.json({
+									accept : true
+								});
+							}
+						});
 					}
 				});
 			}else{
-				if(item){
-					return res.json({
-						call : true,
-						data : item
-					});
-				}else{
-					return res.json({
-						call : false
-					});
-				}
+				return res.json(400, {
+					error : {
+						message : 'Invalid request',
+						type : 'not found exception',
+						code : 714
+					}
+				});
 			}
-		});
+		}
+	});
 });
 
+router.delete('/:call_id', tokenAuth,/**/ function(req, res){
+	var call_id = req.params.call_id;
+	var user_id = req.user_id;
+	if(user_id === undefined || user_id === null){
+		return res.json(400, {
+			error : {
+				message : 'Invalid User to cancel the Request',
+				type : 'request exception',
+				code : 701
+			}
+		});
+	}
+	Call.findOne({_id:call_id,caller:user_id}, function(err, item){
+		if(err){
+			return res.json(500, {
+				error : {
+					message : err.message,
+					type : err.type,
+					code : 702
+				}
+			});
+		}else{
+			if(item){
+				item.remove();
+				return res.json({
+					delete : true
+				});
+			}else{
+				return res.json(400,{
+					error : {
+						message : 'Invalid user to cancel the request',
+						type : err.type,
+						code : 703
+					}
+				});
+			}
+		}
+	});
+});
 router.post('/request', tokenAuth, function(req, res){
 	var params = req.body;
 	if(params.caller === undefined 
@@ -251,73 +453,5 @@ router.post('/request', tokenAuth, function(req, res){
 		}
 	})
 });
-/*/
-router.put('/:_id', function(req, res){
-	var id = req.params._id;
-	var user = req.body;
-	
-	if(id === undefined
-		|| user.device_id === undefined){
-		e.error.message = 'need id and device_id to update the user';
-		e.error.type = 'request exception';
-		e.error.code = 221;
-		res.json(401,e);
-	}
-	var data = {};
-	if(user.phone_no !== undefined){
-		data.phone_no = user.phone_no;
-	}
-	User.findOneAndUpdate(
-		{
-			_id : id,
-			device_id : user.device_id
-		},
-		{$set:data},
-		function(err, result){
-			if(err){
-				e.error.message = err;
-				e.error.type = 'query exception';
-				e.error.code = 222;
-				res.json(500, e);
-			}
-			res.json(result);
-		});
-});
 
-router.delete('/:_id', function(req, res){
-	var id = req.params._id;
-	var user = req.body;
-	if(id === undefined
-		|| user.device_id === undefined){
-		e.error.message = 'need id and device_id to delete the user';
-		e.error.type = 'request exception';
-		e.error.code = 231;
-		res.json(401, e);
-	}
-	User.findOneAndRemove({
-			_id : id,
-			device_id:user.device_id
-		}, function(err, user){
-		if(err){
-			e.error.message = err;
-			e.error.type = 'query exception';
-			e.error.code = 232;
-			res.json(500, e);
-		}
-		if(user){
-			res.json({
-				delete : true
-			});
-		}else{
-			e.error.message = 'user has not found';
-			e.error.type = 'not found exception';
-			e.error.code = 233;
-			res.json({
-				delete : false,
-				error : e.error
-			});
-		}
-	});
-});
-/**/
 module.exports = router;

@@ -32,7 +32,7 @@ router.post('/', function(req, res){
 					else res.send(userModel);
 				});
 			}else{
-				res.send();
+				return res.send();
 			}
 		}
 	});
