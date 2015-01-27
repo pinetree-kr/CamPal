@@ -2,44 +2,11 @@
 var app = angular.module('app', ['app.controllers','ngRoute'])
 .config(function($routeProvider){
 	$routeProvider.when('/', {
-		templateUrl : 'templates/line-list.html',
-		controller : 'LineListController'
+		templateUrl : 'templates/tuktuk-list.html',
+		controller : 'TukTukListController'
 	});
 
-	$routeProvider.when('/line', {
-		templateUrl : 'templates/line-list.html',
-		controller : 'LineListController'
-	});
-	$routeProvider.when('/line/write', {
-		templateUrl : 'templates/line-write.html',
-		controller : 'LineWriteController'
-	});
-	$routeProvider.when('/line/edit/:_id', {
-		templateUrl : 'templates/line-write.html',
-		controller : 'LineEditController'
-	});
-	$routeProvider.when('/line/bus/:_id', {
-		templateUrl : 'templates/line-bus-list.html',
-		controller : 'LineBusListController'
-	});
-	$routeProvider.when('/bus/edit', {
-		templateUrl : 'templates/bus-write.html',
-		controller : 'BusEditController'
-	});
-
-	$routeProvider.when('/city', {
-		templateUrl : 'templates/city-list.html',
-		controller : 'CityListController'
-	});
-	$routeProvider.when('/city/write', {
-		templateUrl : 'templates/city-write.html',
-		controller : 'CityWriteController'
-	});
-	$routeProvider.when('/city/edit/:_id', {
-		templateUrl : 'templates/city-write.html',
-		controller : 'CityEditController'
-	});
-
+/*/
 	$routeProvider.when('/type', {
 		templateUrl : 'templates/type-list.html',
 		controller : 'TypeListController'
@@ -65,4 +32,5 @@ var app = angular.module('app', ['app.controllers','ngRoute'])
 		templateUrl : 'templates/company-write.html',
 		controller : 'CompanyEditController'
 	});
+/**/
 });

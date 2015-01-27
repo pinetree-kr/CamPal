@@ -10,6 +10,11 @@ var app = express();
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(cors());
+
+app.use(express.static(path.join(__dirname, './www')));
+app.get('/', function(req, res){
+	res.sendfile('index.html');
+})
 app.use('/api', require('./routes/api'));
 
 process.on('uncaughtException', function(err){
