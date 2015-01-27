@@ -36,7 +36,7 @@ router.get('/:id', function(req, res){
 		}
 	});
 });
-
+/*/
 router.post('/', function(req, res){
 	var user = req.body;
 	
@@ -68,31 +68,27 @@ router.post('/', function(req, res){
 			return res.json(result);
 		});
 });
+/**/
+router.put('/:id', function(req, res){
+	var id = req.params.id;
+	var params = req.body;
 
-router.put('/:_id', function(req, res){
-	//var email = req.params._email;
-	var id = req.params._id;
-	var user = req.body;
-
-	if(id === undefined || id === null
-		|| user.email === undefined || user.email === null){
-		e.error.message = 'need id, email to update the user';
-		e.error.type = 'request exceptions';
-		e.error.code = 331;
-		return res.json(401, e);
-	}
-
-	TukTuk.findOneAndUpdate(
-		{id : id , email : user.email},
-		{$set:user},
-		function(err, result){
-			if(err){
-				e.error.message = err;
-				e.error.type = 'query exceptions';
-				e.error.code = 332;
-				return res.json(500, e);
+	TukTuk.findOneAndUpdate({_id : id},
+		{
+			$set:{
+				valid : params.valid
 			}
-			return res.json(result);
+		},function(err, result){
+			if(err){
+				return res.json(500, {
+					error : {
+						message : err.message,
+						type : err.type
+					}
+				});
+			}else{
+				return res.json(result);
+			}
 		});
 });
 /*/
