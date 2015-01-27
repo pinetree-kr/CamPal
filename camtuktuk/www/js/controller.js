@@ -15,7 +15,7 @@ angular.module('app.controllers', ['ngRoute'])
 				error(error);
 		},
 		updateTukTuk : function(data, success, error){
-			$http.put(url+'/api/tuktuk/'+id, data).
+			$http.put(url+'/api/tuktuk/'+data.id, data).
 				success(success).
 				error(error);
 		}
@@ -51,8 +51,17 @@ angular.module('app.controllers', ['ngRoute'])
 		});
 
 	$scope.submit = function(item){
-		
-		//console.log(item);
+		TukTukService.updateTukTuk({
+			id:item._id,
+			valid:item.valid
+		},
+		function(success){
+			alert('update success');
+			$location.path('/tuktuk');
+		},
+		function(err){
+			console.log(err);
+		});
 	}
 })
 /*/
