@@ -9,42 +9,30 @@ var e = new Error({
 });
 
 router.get('/', function(req, res){
-	TukTuk.find(function(err, users){
-		if(err) res.send(err);
-		return res.send(users);
+	TukTuk.find().populate('user', 'phone_no').exec(function(err, users){
+		if(err) res.json(404,{
+			error : {
+				message : err.message,
+				type : err.type
+			}
+		});
+		return res.json(users);
 	});
 });
 
-router.get('/:_userid', function(req, res){
-	var userid = req.params._userid;
-	//var email = req.params._email;
-	var params = req.query;
-	if(userid === undefined
-		|| params.email === undefined
-		|| params.id === undefined){
-		e.error.message = 'need userid, id, email to query information about the tuktuk';
-		e.error.type = 'request exception';
-		e.code = 311;
-		return res.json(401, e);
-	}
-	TukTuk.findOne({
-			user : userid,
-			email:params.email,
-			id : params.id
-		}, function(err, user){
+router.get('/:id', function(req, res){
+	var id = req.params.id;
+	TukTuk.findOne({_id : id}, function(err, user){
 		if(err){
-			e.error.message = err;
-			e.error.type = 'query exception';
-			e.error.code = 312;
-			return res.json(500, e);
+			return res.json(404,{
+				error:{
+					message : err.message,
+					type : err.type
+				}
+			});
 		}
-		if(user){
+		else{
 			return res.json(user);
-		}else{
-			e.error.message = 'not found';
-			e.error.type = 'not found exception';
-			e.error.code = 313;
-			return res.json(404, e);
 		}
 	});
 });
