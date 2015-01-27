@@ -1,36 +1,61 @@
 var url = "http://130.211.242.214:8180";
 
 angular.module('app.controllers', ['ngRoute'])
-.factory('TukTukService', function(){
+.factory('TukTukService', function($http){
 	var tuktuk = {};
 	return {
-		get : function(){
-			return tuktuk;
+		getTukTukList : function(success, error){
+			$http.get(url+'/api/tuktuk').
+				success(success).
+				error(error);
+		},
+		getTukTuk : function(id, success, error){
+			$http.get(url+'/api/tuktuk/'+id).
+				success(success).
+				error(error);
+		},
+		updateTukTuk : function(data, success, error){
+			$http.put(url+'/api/tuktuk/'+id, data).
+				success(success).
+				error(error);
 		}
 	}
 })
-.controller('LineBusListController', function($scope, $http, $location, $routeParams, TukTukService){
-	$http.get(url+'/api/tuktuk').
-		success(function(data){
-			
-		}).
-		error(function(err){
+.controller('TukTukListController', function($scope, $location, TukTukService){
+	TukTukService.getTukTukList(
+		function(items){
+			$scope.items = items;
+		},
+		function(err){
 			console.log(err);
 		});
-	/*/
-	$scope.edit = function(item){
-		BusService.setBusInformation(item);
-		$location.path('/bus/edit');
+	$scope.edit = function(id){
+		$location.path('/tuktuk/edit/'+id);
 	}
-	/*/
+})
+.controller('TukTukEditController', function($scope, $routeParams, $location, TukTukService){
+	$scope.opts = [{
+		name : 'Valid',
+		value : true
+	},{
+		name : 'Invalid',
+		value : false
+	}];
+	TukTukService.getTukTuk(
+		$routeParams.id,
+		function(item){
+			$scope.item = item;
+		},
+		function(err){
+			console.log(err);
+		});
+
+	$scope.submit = function(item){
+		
+		//console.log(item);
+	}
 })
 /*/
-.controller('BusEditController', function($scope, $routeParams, $http, $location, TukTukService){
-	$scope.item = BusService.getBusInformation();
-	console.log($scope.item)
-	
-})
-
 .controller('LineListController', function($scope, $http, $filter, $location){
 	var orderBy = $filter('orderBy');
 	$http.get(url+'/api/line').

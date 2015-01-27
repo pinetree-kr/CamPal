@@ -5,7 +5,14 @@ var app = angular.module('app', ['app.controllers','ngRoute'])
 		templateUrl : 'templates/tuktuk-list.html',
 		controller : 'TukTukListController'
 	});
-
+	$routeProvider.when('/tuktuk', {
+		templateUrl : 'templates/tuktuk-list.html',
+		controller : 'TukTukListController'
+	});
+	$routeProvider.when('/tuktuk/edit/:id', {
+		templateUrl : 'templates/tuktuk-write.html',
+		controller : 'TukTukEditController'
+	});
 /*/
 	$routeProvider.when('/type', {
 		templateUrl : 'templates/type-list.html',

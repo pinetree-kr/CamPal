@@ -1,17 +1,21 @@
 <section>
 	<div class="panel panel-default">
 		<div class="panel-heading">
-			<h1 class="panel-title">Type</h1>
+			<h1 class="panel-title">TukTuk-Edit</h1>
 		</div>
 		<div class="panel-body">
 			<form name="form" ng-submit="submit(item)">
 				<div class="form-group">
 					<label for="name">Name</label>
-					<input type="text" name="name" class="form-control" placeholder="Name" required ng-model="item.name">
+					<input type="text" name="name" class="form-control" disabled placeholder="Name" required ng-model="item.name">
 				</div>
-				
-				<button type="button" class="btn btn-danger btn-lg" ng-show="item" ng-click="delete(item._id)">지우기</button>
-				<button type="submit" class="btn btn-primary btn-lg" ng-disabled="form.$invalid">확인</button>
+				<div class="form-group">
+					<label for="name">Valid</label>
+					<br/>
+					<select ng-model="item.valid" ng-options="opt.value as opt.name for opt in opts">
+					</select>
+				</div>
+				<button type="submit" class="btn btn-primary btn-lg" ng-disabled="form.$invalid">Save</button>
 			</form>
 		</div>
 	</div>

@@ -1,7 +1,7 @@
 <section>
 	<div class="panel panel-default">
 		<div class="panel-heading">
-			<h3 class="panel-title">TukTuk</h3>
+			<h3 class="panel-title">TukTuk-List</h3>
 		</div>
 		<div class="panel-body">
 			<table class="table table-striped">
@@ -9,15 +9,19 @@
 					<tr>
 						<th><center>#</center></th>
 						<th>name</th>
-						<th><center>updated</center></th>
+						<th>phone#</th>
+						<th>valid</th>
+						<th><center>signed</center></th>
 						<th><center>misc</center></th>
 					</tr>
 				</thead>
 				<tbody>
-					<tr id="{{company._id}}" ng-repeat="item in items">
+					<tr id="{{item._id}}" ng-repeat="item in items">
 						<td><center>{{$index+1}}</center></td>
 						<td>{{item.name}}</td>
-						<td><center>{{item.updated | date:'MM/dd/yyyy'}}</center></td>
+						<td>{{item.user.phone_no}}</td>
+						<td>{{item.valid}}</td>
+						<td><center>{{item.joined | date:'MM/dd/yyyy'}}</center></td>
 						<td>
 						  <center>
 							  <button type="button" class="btn btn-default btn-xs" ng-click="edit(item._id)">
