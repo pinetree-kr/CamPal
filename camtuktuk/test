@@ -97,6 +97,7 @@ function push2tuktuk(data, callback){
 // IOS푸싱
 function pushAPN(data, users, callback){
 	var apn = require('apn');
+	//var tokens = [];
 	if(users.length>0){	
 		var opts = {
 			gateway : 'gateway.sandbox.push.apple.com',
@@ -106,24 +107,6 @@ function pushAPN(data, users, callback){
 		};
 		
 		var apnConnection = new apn.Connection(opts);
-		
-		var note = new apn.Notification();
-		//note.badge = 1;
-		note.alert = data.message;
-		note.sound = 'dong.aiff'
-		note.payload = data;
-		/*/	
-		var feedOpts = {
-			batchFeedback : true,
-			interval : 300
-		}
-		var feedback = new apn.Feedback(feedOpts);
-		feedback.on("feedback", function(devices){
-			console.log('feedback:'+devices);
-		});
-		/**/
-		//apnConnection.pushNotification(note, users);
-		/**/
 		apnConnection.on('socketError' , function(){
 			console.log('socketError');
 			callback({
@@ -134,21 +117,9 @@ function pushAPN(data, users, callback){
 				}
 			});
 		});
-		apnConnection.on('error', function(err){
-			console.log('error');
-		});
-		apnConnection.on('completed', function(){
-			console.log('completed');
-			callback(null, {
-				success : true
-			});
-		});
 		apnConnection.on('transmitted' , function(n, d){
 			console.log('transmitted');
-		});
-		apnConnection.on('transmissionError', function(code, n, d){
-			console.log('transmissionError');
-			console.log(code);
+			callback(null, n);
 		});
 		apnConnection.on('timeout' , function(){
 			console.log('timeout');
@@ -160,16 +131,21 @@ function pushAPN(data, users, callback){
 				}
 			});
 		});
-		/**/
+
+		var note = new apn.Notification();
+		note.badge = 1;
+		note.alert = data.message;
+		note.sound = 'dong.aiff'
+		note.payload = data;
 		
-		/**/
-		var device;
+		/*/
 		for(var i=0; i<users.length; i++){
 			//console.log('user:'+users[i]);
-			device = new apn.Device(users[i]);
-			apnConnection.pushNotification(note, device);
+			apnConnection.pushNotification(note, users[i]);
 		}
-
+		/**/
+		apnConnection.pushNotification(note, users);
+		
 	}else{
 		console.log('none');
 		callback();

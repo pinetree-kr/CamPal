@@ -276,9 +276,32 @@ router.post('/join', tokenAuth, function(req, res){
 	});
 });
 /**/
+
+router.put('/:id', tokenAuth, function(req, res){
+	var id = req.params.id;
+	var params = req.body;
+	User.findOneAndUpdate(
+		{_id:id},
+		{$set:params},
+		function(err, item){
+			if(err){
+				return res.json(400,{
+					error : {
+						message : err.message,
+						type : err.type,
+						code : 452
+					}
+				});
+			}else{
+				//console.log(item);
+				return res.json(item);
+			}
+		});	
+});
+
 // 300 사용자 정보 가져오기
-router.get('/:_id', tokenAuth, function(req, res){
-	var id = req.params._id;
+router.get('/:id', tokenAuth, function(req, res){
+	var id = req.params.id;
 	async.parallel([
 		function(callback){
 			User.findOne({_id:id}, function(err, item){
@@ -360,55 +383,6 @@ router.get('/:_id', tokenAuth, function(req, res){
 			}
 		}
 	});
-	/*/
-	User.findOne({_id : id}, function(err, user){
-		if(err){
-			return res.json(400, {
-				error : {
-					message : err.message,
-					type : 'query exception',
-					code : 301
-				}
-			});
-		}else{
-			if(user){
-				var TukTuk = require('../models/tuktuk');
-				TukTuk.findOne({user:id}, function(err, tuktuk){
-					if(err){
-						return res.json(500, {
-							error : {
-								message : err.message,
-								type : err.type,
-								code : 305
-							}
-						});
-					}else{
-						if(tuktuk){
-							return res.json({
-								user : user,
-								tuktuk : tuktuk
-							});
-						}else{
-							return res.json({
-								user : user
-							});
-						}
-					}
-					//return res.json(user);
-				});
-				
-			}else{
-				return res.json(400, {
-					error : {
-						message : 'Invalid user',
-						type : 'not found exception',
-						code : 303
-					}
-				});
-			}
-		}
-	});
-	/**/
 });
 
 router.put('/:_id', tokenAuth, function(req, res){
