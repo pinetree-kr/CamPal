@@ -17,6 +17,7 @@ router.use('/user', require('./user'));
 router.use('/tuktuk', require('./tuktuk'));
 router.use('/push', require('./push'));
 router.use('/call', require('./call'));
+router.use('/location', require('./location'));
 router.all('/*', function(req, res){
 	res.json(404,e);
 });

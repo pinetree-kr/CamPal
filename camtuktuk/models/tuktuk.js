@@ -11,6 +11,10 @@ var TukTukSchema = new Schema({
 		lat : Number,
 		lng : Number
 	},
+	call : {
+		type : Schema.Types.ObjectId,
+		ref : 'call'
+	},
 	name : String,
 	valid : {
 		type : Boolean,

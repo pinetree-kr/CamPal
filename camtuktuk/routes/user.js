@@ -337,7 +337,8 @@ router.get('/:id', tokenAuth, function(req, res){
 		function(callback){
 			var Call = require('../models/call');
 			Call.findOne({
-				$or:[{caller:id},{callee:id}]
+				$or:[{caller:id},{callee:id}],
+				status:{$ne:'done'}	
 			},function(err, item){
 				if(err){
 					return res.json(500, {

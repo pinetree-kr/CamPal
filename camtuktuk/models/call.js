@@ -18,6 +18,16 @@ var CallSchema = new Schema({
 		required : true,
 		default : 'request'
 	},
+	done : {
+		caller : {
+			type: Boolean,
+			default : false
+		},
+		callee : {
+			type : Boolean,
+			default : false
+		}
+	},
 	price : {
 		type : Number,
 		//required : true
@@ -29,7 +39,7 @@ var CallSchema = new Schema({
 	dest : {
 		name : String,
 		latlng : {}
-	},	
+	},
 	created : {
 		type : Number,
 		required : true

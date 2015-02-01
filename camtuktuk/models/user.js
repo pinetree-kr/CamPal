@@ -13,18 +13,10 @@ var UserSchema = new Schema({
 		required : true,
 	},
 	platform : String,
-	/*/
-	location : {
-		lat : Number,
-		lng : Number
-	},
-	/**/
-	/*/
 	call : {
 		type : Schema.Types.ObjectId,
 		ref : 'call'
 	},
-	/**/
 	token : String,
 	expires : Number,
 	joined : Number
