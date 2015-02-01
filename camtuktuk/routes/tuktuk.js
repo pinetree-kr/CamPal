@@ -1,12 +1,6 @@
 var express = require('express');
 var router = express.Router();
 var TukTuk = require('../models/tuktuk');
-var Error = require('../models/error');
-var e = new Error({
-	message : '',
-	type : '',
-	code : 0
-});
 
 router.get('/', function(req, res){
 	TukTuk.find().populate('user', 'phone_no').exec(function(err, users){
