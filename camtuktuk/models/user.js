@@ -13,9 +13,14 @@ var UserSchema = new Schema({
 		required : true,
 	},
 	platform : String,
+	// 요청한 콜 정보
 	call : {
 		type : Schema.Types.ObjectId,
 		ref : 'call'
+	},
+	tuktuk : {
+		type : Schema.Types.ObjectId,
+		ref : 'tuktuk'
 	},
 	token : String,
 	expires : Number,

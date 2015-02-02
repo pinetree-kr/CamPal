@@ -2,7 +2,7 @@ var express = require('express');
 var moment = require('moment');
 var app = express();
 var router = express.Router();
-
+var jwt = require('jwt-simple');
 
 var async = require('async');
 var User = require('../models/user');
@@ -12,29 +12,9 @@ var auth = require('./auth');
 
 var tokenAuth = auth.tokenAuth; 
 
-
-router.get('/test/:id', function(req, res){
-	var id = req.params.id;
-	User.findOne({_id:id},function(err,item){
-		if(err){
-			return res.json(400,{
-				error:{
-					message:err.message,
-					type:err.type,
-					code:800
-				}
-			});
-		}else{
-			return res.json(item);
-		}
-	})
-});
-
-// 인증 및 토큰 발행
+// 100 : 디바이스 인증
 router.post('/auth', function(req, res){
 	var params = req.body;
-	var jwt = require('jwt-simple');
-
 	if(params.phone_no == undefined || params.device_id === undefined){
 		return res.json(400,{
 			error : {
@@ -143,18 +123,15 @@ router.post('/auth', function(req, res){
 	]);
 });
 
-// 툭툭 가입
 router.post('/join', tokenAuth, function(req, res){
 	var params = req.body;
 	var user_id = req.user_id;
-
 	var TukTuk = require('../models/tuktuk');
-
 	TukTuk.findOne(
 		{user:user_id},
 		function(err, item){
 			if(err){
-				return res.json(400,{
+				return res.json(500,{
 					error : {
 						message : err.message,
 						type : err.type,
@@ -187,12 +164,122 @@ router.post('/join', tokenAuth, function(req, res){
 			}
 		});
 });
+/*/
+// 200 새로운 드라이버 등록(facebook)
+router.post('/join', tokenAuth, function(req, res){
+	var params = req.body;
+	if(params._id === undefined 
+		|| params.access_token === undefined){
+		return res.json(400, {
+			error : {
+				message : 'Need more info to join',
+				type : 'request exception',
+				code : 201
+			}
+		});
+	}
+	var https = require('https');
 
-// 정보 수정(업데이트)
+	var opts = {
+		host : 'graph.facebook.com',
+		method : 'GET',
+		path : '/v2.2/me?access_token='+params.access_token+'&fields=id,name,email,gender'
+	}
+
+	async.waterfall([
+		function(callback){
+			https.get(opts, function(response){
+				var res_data = '';
+				response.on("data", function(data){
+					res_data += data;
+				});
+				response.on('end', function(){
+					var data = JSON.parse(res_data);
+					if(data.error !== undefined){
+						return res.json(400, {
+							error :{
+								message: data.error.message,
+								type : data.error.type,
+								code : 214
+							}
+						});
+					}else{
+						data.user = params._id;
+						callback(null, data);
+					}
+				});
+			}).on('error', function(err){
+				return res.json(400,{
+					error : {
+						message : err.message,
+						type : err.type,
+						code : 212
+					}
+				});
+			});
+		}
+	],
+	// 서버에 저장한다
+	function(err, results){
+		var TukTuk = require('../models/tuktuk');
+
+		TukTuk.findOne({id:results.id},function(err, object){
+			if(!err){
+				// update
+				if(object){
+					object.update({$set:results}, function(err, item){
+						if(err){
+							return res.json(500,{
+								error : {
+									message : err.message,
+									type : err.type,
+									code : 216
+								}
+							});
+						}else{
+							console.log('update');
+							//console.log(item);
+							return res.json(item);
+						}
+					})
+				}
+				// save
+				else{
+					var tuktuk = TukTuk(results);
+					tuktuk.joined = moment().valueOf();
+					tuktuk.save(function(err, item){
+						if(!err){
+							console.log('insert');
+							//console.log(item);
+							return res.json(item);
+						}else{
+							return res.json(500,{
+								error : {
+									message : err.message,
+									type : err.type,
+									code : 215
+								}
+							});
+						}
+					});
+				}
+			}else{
+				return res.json(500,{
+					error : {
+						message : err.message,
+						type : err.type,
+						code : 217
+					}
+				});
+			}
+		});
+	});
+});
+/**/
+
 router.put('/:id', tokenAuth, function(req, res){
 	var id = req.params.id;
 	var params = req.body;
-
 	User.findOneAndUpdate(
 		{_id:id},
 		{$set:params},
@@ -212,35 +299,90 @@ router.put('/:id', tokenAuth, function(req, res){
 		});	
 });
 
-// 사용자 정보 가져오기
+// 300 사용자 정보 가져오기
 router.get('/:id', tokenAuth, function(req, res){
 	var id = req.params.id;
-
-	User
-		.findOne({_id:id})
-		.populate('tuktuk', 'name latlng call valid')
-		.exec(function(err, item){
-			if(err){
-				return res.json(500, {
+	async.parallel([
+		function(callback){
+			User.findOne({_id:id}, function(err, item){
+				if(err){
+					return res.json(400, {
 						error : {
 							message : err.message,
-							type : err.type,
+							type : 'query exception',
 							code : 301
 						}
 					});
-			}else{
-				if(item){
-					return res.json(item);
 				}else{
-					return res.json(404, {
+					callback(null, item);
+				}
+			});
+		},
+		function(callback){
+			var TukTuk = require('../models/tuktuk');
+			TukTuk.findOne({user:id,valid:true}, function(err, item){
+				if(err){
+					return res.json(500, {
 						error : {
-							message : 'Not found user',
-							type : 'not found exception',
-							code : 302
+							message : err.message,
+							type : err.type,
+							code : 305
 						}
 					});
+				}else{
+					callback(null, item);
 				}
+			});
+		},
+		function(callback){
+			var Call = require('../models/call');
+			Call.findOne({
+				$or:[{caller:id},{callee:id}],
+				status:{$ne:'done'}	
+			},function(err, item){
+				if(err){
+					return res.json(500, {
+						error : {
+							message : err.message,
+							type : err.type,
+							code : 305
+						}
+					});
+				}else{
+					callback(null, item);
+				};
+			});
+		}
+	],
+	function(err, results){
+		if(err){
+			return res.json(500,{
+				error : {
+					message :err.message,
+					type : err.type,
+					code : 308
+				}
+			});
+		}else{
+			if(results[0]===null){
+				return res.json(400,{
+					error : {
+						message : 'Invalid user',
+						type : 'not found exception',
+						code : 303
+					}
+				});
+			}else{
+				var data = {
+					user : results[0]
+				};
+				if(results[1]!==null)
+					data.tuktuk = results[1];
+				if(results[2]!==null)
+					data.call = results[2]._id;
+				return res.json(data);
 			}
+		}
 	});
 });
 

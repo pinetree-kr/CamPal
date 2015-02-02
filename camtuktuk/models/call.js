@@ -11,9 +11,10 @@ var CallSchema = new Schema({
 		type : Schema.Types.ObjectId,
 		ref : 'user'
 	},
-	type : {},
+	type : String,
 	rentalType : String,
 	status : {
+		//request, response, done
 		type : String,
 		required : true,
 		default : 'request'
@@ -28,10 +29,12 @@ var CallSchema = new Schema({
 			default : false
 		}
 	},
+	/*/
 	price : {
 		type : Number,
 		//required : true
 	},
+	/**/
 	dept : {
 		name : String,
 		latlng : {}

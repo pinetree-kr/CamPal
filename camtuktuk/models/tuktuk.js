@@ -2,6 +2,7 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var TukTukSchema = new Schema({
+	name : String,
 	user : {
 		type : Schema.Types.ObjectId,
 		required : true,
@@ -11,21 +12,17 @@ var TukTukSchema = new Schema({
 		lat : Number,
 		lng : Number
 	},
+	// 수락한 콜 정보
 	call : {
 		type : Schema.Types.ObjectId,
 		ref : 'call'
 	},
-	name : String,
+	// 가입 요청시 대기중
 	valid : {
 		type : Boolean,
 		required : true,
 		default : false,
 	},
 	joined : Number,
-	/*/
-	id : Number,
-	email : String,
-	gender : String,
-	/**/
 });
 module.exports = mongoose.model('tuktuk', TukTukSchema);

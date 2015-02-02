@@ -10,9 +10,9 @@ var tokenAuth = auth.tokenAuth;
 function randomInt(low, high){
 	return Math.floor(Math.random() * (high - low) + low);
 }
-
-// 완료에 대한 푸시
 function push2done(data, users, callback){
+	//console.log('pushdone');
+	//console.log(users);
 	async.parallel([
 		function(cb){
 			push2user(data, users.caller, cb);
@@ -23,8 +23,6 @@ function push2done(data, users, callback){
 		callback(err, results);
 	});
 };
-
-// 특정 유저에게 푸시
 function push2user(data, user_id, callback){
 	var User = require('../models/user');
 	User.findOne({_id:user_id}, function(err, user){
@@ -47,13 +45,11 @@ function push2user(data, user_id, callback){
 		}
 	});
 }
-
-// 전체 뚞뚝 (except 진행중) 푸
 function push2tuktuk(data, callback){
 	var TukTuk = require('../models/tuktuk');
 	async.parallel([
 		function(cb){
-			TukTuk.find({valid:true, call:null})
+			TukTuk.find({valid:true})
 				.populate(
 					'user',
 					'device_id platform'
