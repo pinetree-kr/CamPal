@@ -61,7 +61,7 @@ router.post('/auth', function(req, res){
 							phone_no : params.phone_no,
 							platform : params.platform,
 							expires : expires,
-							joined : moment().valueOf();
+							joined : moment().valueOf()
 						});
 						user.token = jwt.encode(user, secret, 'HS256');
 						userModel.save(next);
