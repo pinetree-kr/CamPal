@@ -10,27 +10,13 @@ var TukTuk = require('../models/tuktuk');
 var secret = 'photobypinetree';
 var auth = require('./auth');
 
-var tokenAuth = auth.tokenAuth; 
+var tokenAuth = auth.tokenAuth;
 
-
-router.get('/test/:id', function(req, res){
-	var id = req.params.id;
-	User.findOne({_id:id},function(err,item){
-		if(err){
-			return res.json(400,{
-				error:{
-					message:err.message,
-					type:err.type,
-					code:800
-				}
-			});
-		}else{
-			return res.json(item);
-		}
-	})
-});
-
-// 인증 및 토큰 발행
+/*
+ * 인증 및 토큰 발행
+ * params : phone_no, device_id, platform
+ * description : 기존정보가 있으면 device_id, platform 업데이트, 그렇지 않으면 신규 가입
+ */
 router.post('/auth', function(req, res){
 	var params = req.body;
 	var jwt = require('jwt-simple');
@@ -44,148 +30,113 @@ router.post('/auth', function(req, res){
 			}
 		});
 	}
+
 	async.waterfall([
-		// 번호 사용자 여부 확인
+		// phone_no 가입 여부 확인 및 업데이트
 		function(callback){
-			User.findOne({
-					phone_no : params.phone_no,
-					//device_id : params.device_id
-				},
-				function(err, user){
-					if(err){
-						return res.json(400, {
-							error : {
-								message : err.message,
-								type : err.type,
-								code : 102
-							}
-						});
-					}else{
-						// 사용자 존재시 device_id 비교
-						if(user){
-							// 같은 사용자면 token만 반환
-							if(user.device_id === params.device_id){
-								return res.json({
-									_id : user._id,
-									token : user.token,
-									expires : user.expires
-								});
-							}
-							// 다른 사용자면 업데이트 후 token 반환
-							else{
-								user.update(
-									{
-										$set:{
-											device_id : params.device_id,
-											platform:params.platform
-										}
-									},
-									function(result){
-										return res.json({
-											_id : user._id,
-											token : user.token,
-											expires : user.expires
-										});
-									});
-							}
-						}else{
-							//신규 추가
-							callback();
-						}
-					}
-				});
-		},
-		// 기존 사용자 제거
-		function(callback){
-			User.remove({device_id:params.device_id},function(err, user){
-				if(err){
-					return res.json(500,{
-						error : {
-							message : err.message,
-							type : err.type,
-							code : 205
-						}
-					});
+			User.findOneAndUpdate({phone_no:params.phone_no},{
+				$set:{
+					device_id : params.device_id,
+					platform:params.platform
 				}
-				callback();
-			})
+			},callback);
 		},
-		// 신규 추가
-		function(callback){
-			var userModel = new User();
-			userModel.device_id = params.device_id;
-			userModel.phone_no = params.phone_no;
-			if(params.platform !== undefined){
-				userModel.platform = params.platform;
+		function(user, callback){
+			// 기존 유저
+			if(user){
+				callback(null, user);
 			}
-			var expires = moment().add(7,'days').valueOf();
-			userModel.expires = expires;
-			userModel.token = jwt.encode(userModel, secret, 'HS256');
-			userModel.joined = moment().valueOf();
-			userModel.save(function(err, user){
-				if(err){
-					return res.json(500, {
-						error : {
-							message : err.message,
-							type : err.type,
-							code : 205
-						}
-					});
-				}else{
-					return res.json({
-						_id : user._id,
-						token : user.token,
-						expires : user.expires
-					});
+			// 신규
+			else{
+				// device_id 존재 여부 확인 후 제거
+				async.waterfall([
+					function(next){
+						User.findOneAndRemove({device_id:params.device_id},next);
+					},
+					// 추가
+					function(next){
+						var expires = moment().add(7,'days').valueOf();
+						var user = new User({
+							device_id : params.device_id,
+							phone_no : params.phone_no,
+							platform : params.platform,
+							expires : expires,
+							joined : moment().valueOf();
+						});
+						user.token = jwt.encode(user, secret, 'HS256');
+						userModel.save(next);
+					}
+				],callback);
+			}
+		},
+	],function(err,result){
+		if(err){
+			return res.json(400,{
+				error : {
+					message :err.message,
+					type : err.type,
+					code : 110
 				}
+			})
+		}else{
+			return res.json({
+				_id : result._id,
+				token : result.token,
+				expires : result.expires
 			});
 		}
-	]);
+	});
 });
 
-// 툭툭 가입
-router.post('/join', tokenAuth, function(req, res){
+/*
+ * 툭툭 가입
+ * params : user_id, name
+ * description : 기존정보가 있으면 user와 매칭, 그렇지 않으면 신규 가입 후 user와 매칭
+ */
+router.post('/:id/join', tokenAuth, function(req, res){
+	var user_id = req.params.id;
 	var params = req.body;
-	var user_id = req.user_id;
 
-	var TukTuk = require('../models/tuktuk');
-
-	TukTuk.findOne(
-		{user:user_id},
-		function(err, item){
-			if(err){
-				return res.json(400,{
-					error : {
-						message : err.message,
-						type : err.type,
-						code : 216
-					}
-				});
-			}else{
-				if(!item){
+	async.waterfall([
+		//기존TukTuk 확인, 없으면 신규
+		function(callback){
+			TukTuk.findOne({user:user_id}, function(err, item){
+				if(err) callback(err);
+				// callback
+				if(item){
+					callback(null, item);
+				}
+				// new
+				else{
 					var tuktuk = new TukTuk({
 						name : params.name,
 						user : user_id,
 						joined : moment().valueOf()
 					});
-					tuktuk.save(function(err, result){
-						if(err){
-							return res.json(500,{
-								error : {
-									message : err.message,
-									type : err.type,
-									code : 217
-								}
-							});
-						}else{
-							return res.json(result);
-						}
-					});
-				}else{
-					return res.json(item);
+					tuktuk.save(callback);
 				}
-			}
-		});
+			});
+		},
+		//User 매칭(user.tuktuk에 tuktuk._id삽입)
+		function(tuktuk, callback){
+			User.findOneAndUpdate(
+				{_id:user_id},
+				{$set : {tuktuk:tuktuk._id}},
+				callback);
+		}
+	],function(err, result){
+		if(err){
+			return res.json(400,{
+				error : {
+					message : err.message,
+					type : err.type,
+					code : 210
+				}
+			});
+		}else{
+			return res.json(result);
+		}
+	});
 });
 
 // 정보 수정(업데이트)
@@ -209,13 +160,12 @@ router.put('/:id', tokenAuth, function(req, res){
 				//console.log(item);
 				return res.json(item);
 			}
-		});	
+		});
 });
 
 // 사용자 정보 가져오기
 router.get('/:id', tokenAuth, function(req, res){
 	var id = req.params.id;
-
 	User
 		.findOne({_id:id})
 		.populate('tuktuk', 'name latlng call valid')
@@ -244,52 +194,8 @@ router.get('/:id', tokenAuth, function(req, res){
 	});
 });
 
-router.put('/:_id', tokenAuth, function(req, res){
-	var id = req.params._id;
-	var params = req.body;
-
-	User.findOne({_id : id}, function(err, user){
-		if(err){
-			return res.json(500,{
-				error : {
-					message : err.message,
-					type : 'query exception',
-					code : 222
-				}
-			});
-		}else{
-			if(user){
-				user.update({$set:params}, function(err, result){
-					if(err){
-						return res.json(500,{
-							error : {
-								message :err.message,
-								type : 'query exception',
-								code : 224
-							}
-						});
-					}else{
-						return res.json({
-							update : true
-						});
-					}
-				});
-			}else{
-				return res.json({
-					error : {
-						message : 'Invalid user',
-						type : 'not found exception',
-						code : 223
-					}
-				});
-			}
-		}
-	});
-});
-
-router.delete('/:_id', tokenAuth, function(req, res){
-	var id = req.params._id;
-	
+router.delete('/:id', tokenAuth, function(req, res){
+	var id = req.params.id;
 	User.findOneAndRemove({_id : id}, function(err, user){
 		if(err){
 			return res.json(500, {
@@ -313,7 +219,6 @@ router.delete('/:_id', tokenAuth, function(req, res){
 					code : 233
 				}
 			});
-			
 		}
 	});
 });
