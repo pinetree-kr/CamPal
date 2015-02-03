@@ -119,6 +119,7 @@ router.post('/:id/join', tokenAuth, function(req, res){
 		},
 		//User 매칭(user.tuktuk에 tuktuk._id삽입)
 		function(tuktuk, callback){
+			console.log(tuktuk);
 			User.findOneAndUpdate(
 				{_id:user_id},
 				{$set : {tuktuk:tuktuk._id}},
@@ -134,6 +135,7 @@ router.post('/:id/join', tokenAuth, function(req, res){
 				}
 			});
 		}else{
+			console.log(result);
 			return res.json(result);
 		}
 	});
