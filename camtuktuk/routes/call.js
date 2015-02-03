@@ -4,280 +4,10 @@ var Call = require('../models/call');
 var moment = require('moment');
 var async = require('async');
 var auth = require('./auth');
+var push = require('./push');
 
 var tokenAuth = auth.tokenAuth;
 
-function randomInt(low, high){
-	return Math.floor(Math.random() * (high - low) + low);
-}
-
-// 완료에 대한 푸시
-function push2done(data, users, callback){
-	async.parallel([
-		function(cb){
-			push2user(data, users.caller, cb);
-		},function(cb){
-			push2user(data, users.callee, cb);
-		}
-	],function(err, results){
-		callback(err, results);
-	});
-};
-
-// 특정 유저에게 푸시
-function push2user(data, user_id, callback){
-	var User = require('../models/user');
-	User.findOne({_id:user_id}, function(err, user){
-		if(err){
-			return res.json(400,{
-				error : {
-					message : err.message,
-					type : err.type,
-					code :856
-				}
-			});
-		}else{
-			var users = [];
-			users.push(user.device_id);
-			if(user.platform === 'Android'){
-				pushGCM(data, users, callback);
-			}else if(user.platform === 'iOS'){
-				pushAPN(data, users, callback);
-			}
-		}
-	});
-}
-
-// 전체 뚞뚝 (except 진행중) 푸
-function push2tuktuk(data, callback){
-	var TukTuk = require('../models/tuktuk');
-	async.parallel([
-		function(cb){
-			TukTuk.find({valid:true, call:null})
-				.populate(
-					'user',
-					'device_id platform'
-				)
-				.exec(function(err, items){
-					items = items.filter(function(item){
-						return item.user.platform === 'Android';
-					});
-					cb(err, items);
-				});
-		},
-		function(cb){
-			TukTuk.find({valid:true})
-				.populate({
-					path : 'user',
-					select : 'device_id platform'
-				})
-				.exec(function(err, items){
-					items = items.filter(function(item){
-						return item.user.platform === 'iOS';
-					});
-					cb(err, items);
-				});
-		}
-	], function(err, results){
-		if(err){callback(err, null)}
-		else{
-			var gcmIds = [];
-			var apnIds = [];
-			
-			for(var i=0; i<results[0].length; i++){
-				gcmIds.push(results[0][i].user.device_id);
-			}
-			for(var i=0; i<results[1].length; i++){
-				apnIds.push(results[1][i].user.device_id);
-			}
-			
-			async.parallel([
-				function(cback){
-					pushGCM(
-						data,
-						gcmIds,
-						cback
-					);
-				},
-				function(cback){
-					pushAPN(
-						data,
-						apnIds,
-						cback
-					);
-				}
-			], callback);
-		}
-	});
-};
-// IOS푸싱
-function pushAPN(data, users, callback){
-	var apn = require('apn');
-	if(users.length>0){	
-		var optsProd = {
-			gateway : 'gateway.push.apple.com',
-			cert : '../cert/prodcert.pem',
-			key : '../cert/prodkey.pem',
-			//errorCallback: callback
-		};
-		var optsDev = {
-			geteway : 'gateway.sandbox.push.apple.com',
-			cert : '../cert/devcert.pem',
-			key : '../cert/devkey.pem',
-		}
-		
-		var apnProd = new apn.Connection(optsProd);
-		var apnDev = new apn.Connection(optsDev);
-
-		var note = new apn.Notification();
-		//note.badge = 1;
-		note.alert = data.message;
-		note.sound = 'dong.aiff'
-		note.payload = data;
-		/*/	
-		var feedOpts = {
-			batchFeedback : true,
-			interval : 300
-		}
-		var feedback = new apn.Feedback(feedOpts);
-		feedback.on("feedback", function(devices){
-			console.log('feedback:'+devices);
-		});
-		/**/
-		//apnConnection.pushNotification(note, users);
-		/**/
-		apnProd.on('socketError' , function(){
-			console.log('socketError');
-			callback({
-				error : {
-					message : 'socket error',
-					type : 'socket exception',
-					code : 868
-				}
-			});
-		});
-		apnProd.on('error', function(err){
-			console.log('error'+err);
-		});
-		apnProd.on('completed', function(){
-			console.log('completed');
-			callback(null, {
-				success : true
-			});
-		});
-		apnProd.on('transmitted' , function(n, d){
-			console.log('transmitted');
-		});
-		apnProd.on('transmissionError', function(code, n, d){
-			console.log('transmissionError');
-			console.log(code);
-		});
-		apnProd.on('timeout' , function(){
-			console.log('timeout');
-			callback({
-				error : {
-					message : 'timeout',
-					type : 'timeout exception',
-					code : 869
-				}
-			});
-		});
-		/**/
-		
-		/**/
-		var device;
-		for(var i=0; i<users.length; i++){
-			device = new apn.Device(users[i]);
-			apnProd.pushNotification(note, device);
-			apnDev.pushNotification(note, device);
-		}
-
-	}else{
-		console.log('none');
-		callback();
-	}
-}
-
-//안드로이드 푸싱
-function pushGCM(data, users, callback){
-	var gcm = require('node-gcm');
-	var sender = new gcm.Sender('AIzaSyBI9GCyGNWpNbxSGzzfgB9bz5dUM-qnLMc');
-	var message = new gcm.Message({
-		collapseKey : ''+randomInt(1,100),
-		delayWhileIdle : false,
-		timeToLive : 10,
-		data : data,
-	});
-	sender.send(message, users, 3, function(err, result){
-		if(err){
-			callback({
-				message: err,
-				type : 'GCM exception'
-			}, null);
-		}else{
-			callback(err, result);
-		}
-	});
-}
-/**/
-router.get('/list', function(req, res){
-	Call.find(function(err, items){
-		return res.json(items);
-	});
-});
-router.get('/test/:id', function(req, res){
-	var id = req.params.id;
-	var data = req.query;
-	var User = require('../models/user');
-	User.findOne({device_id:id}, function(err, user){
-		if(err){
-			res.json(400,{
-				error:{
-					message : err.message,
-					type : err.type,
-					code : 899
-				}
-			});
-		}else{
-			var users = [];
-			//console.log(user);
-			users.push(user.device_id);
-			if(user.platform==='Android'){
-				pushGCM(data, users, function(err, result){
-					if(err) res.send(err);
-					res.send(result);
-				});
-			}else if(user.platform==='iOS'){
-				pushAPN(data, users, function(err, result){
-					if(err) res.send(err);
-					res.send(result);
-				});
-			}
-		}
-	});	
-});
-/**/
-router.get('/test', function(req, res){
-	var data = req.query;
-	push2tuktuk({
-		message: data.message,
-		title : data.title
-	},
-	function(err, result){
-		if(err){
-			res.json(400,{
-				error : {
-					message : err.message,
-					type : err.type,
-					code : 801
-				}
-			});
-		}else{
-			return res.json(result);
-		}
-	});
-});
-/**/
 router.get('/', tokenAuth, function(req, res){
 	var params = req.query;
 	Call.find({status:'request'})
@@ -330,7 +60,6 @@ router.put('/:call_id/done/:type', tokenAuth, function(req, res){
 	var call_id = req.params.call_id;
 	var type = req.params.type;
 	var user_id = req.user_id;
-	
 	if(type === 'caller'){
 		Call.findOne({_id : call_id, caller : user_id}
 			,function(err, item){
@@ -348,7 +77,7 @@ router.put('/:call_id/done/:type', tokenAuth, function(req, res){
 					var _status = item.status;
 					if(_done.caller && _done.callee){
 						_status = 'done';
-					}						
+					}
 					Call.findOneAndUpdate({
 						_id:call_id, caller:user_id
 					},{
@@ -369,11 +98,8 @@ router.put('/:call_id/done/:type', tokenAuth, function(req, res){
 									}
 								});
 							}else{
-								//console.log('caller');
-								//console.log(result);
 								if(result.status==='done'){
-									//console.log('done');
-									push2done({
+									push.pushToBoth({
 											//call : item._id,
 											type : 'done',
 											foreground : "0",
@@ -426,7 +152,7 @@ router.put('/:call_id/done/:type', tokenAuth, function(req, res){
 							//console.log(result);
 								if(result.status==='done'){
 									//console.log('done');
-									push2done({
+									push.pushToBoth({
 											//call : item._id,
 											type : 'done',
 											foreground : "0",
@@ -490,7 +216,7 @@ router.put('/:call_id/accept', tokenAuth, function(req, res){
 						});
 					}else{
 						//console.log('accept to :'+item.caller);
-						push2user({
+						push.pushToOne({
 							message : 'The call for TukTuk has been responsed',
 							title : 'CamTukTuk',
 							call : item._id,
@@ -616,7 +342,7 @@ router.post('/request', tokenAuth, function(req, res){
 							}
 						});
 					}else{
-						push2tuktuk({
+						push.pushToIdles({
 								message: 'The call for TukTuk has been requested',
 								title : 'CamTukTuk',
 								call : item._id,

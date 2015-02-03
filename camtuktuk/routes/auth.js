@@ -10,7 +10,6 @@ var getToken = function(headers){
 }
 var tokenAuth = function(req, res, next){
 	var token = getToken(req.headers);
-	
 	if(token !== null){
 		var User = require('../models/user');
 

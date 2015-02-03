@@ -14,8 +14,8 @@ var tokenAuth = auth.tokenAuth;
 
 /*
  * 인증 및 토큰 발행
- * params : phone_no, device_id, platform
- * description : 기존정보가 있으면 device_id, platform 업데이트, 그렇지 않으면 신규 가입
+ * @params : phone_no, device_id, platform
+ * @description : 기존정보가 있으면 device_id, platform 업데이트, 그렇지 않으면 신규 가입
  */
 router.post('/auth', function(req, res){
 	var params = req.body;
@@ -90,8 +90,8 @@ router.post('/auth', function(req, res){
 
 /*
  * 툭툭 가입
- * params : user_id, name
- * description : 기존정보가 있으면 user와 매칭, 그렇지 않으면 신규 가입 후 user와 매칭
+ * @params : user_id, name
+ * @description : 기존정보가 있으면 user와 매칭, 그렇지 않으면 신규 가입 후 user와 매칭
  */
 router.post('/:id/join', tokenAuth, function(req, res){
 	var user_id = req.params.id;
@@ -139,7 +139,11 @@ router.post('/:id/join', tokenAuth, function(req, res){
 	});
 });
 
-// 정보 수정(업데이트)
+/*
+ * 유저정보 수정(device_id가 매칭되지 않아 수정할때)
+ * @params : phone_no, device_id, platform
+ * @description : //
+ */
 router.put('/:id', tokenAuth, function(req, res){
 	var id = req.params.id;
 	var params = req.body;
@@ -163,7 +167,11 @@ router.put('/:id', tokenAuth, function(req, res){
 		});
 });
 
-// 사용자 정보 가져오기
+/*
+ * 사용자 정보 가져오기(로그인을 위함)
+ * @params : user_id, token
+ * @description : //
+ */
 router.get('/:id', tokenAuth, function(req, res){
 	var id = req.params.id;
 	User
