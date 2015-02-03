@@ -1,6 +1,7 @@
 var express = require('express');
 var router = express.Router();
 var Call = require('../models/call');
+var User = require('../models/user');
 var moment = require('moment');
 var async = require('async');
 var auth = require('./auth');
@@ -8,6 +9,11 @@ var push = require('./push');
 
 var tokenAuth = auth.tokenAuth;
 
+/*
+ * call 목록 조회
+ * @params : token
+ * @description
+ */
 router.get('/', tokenAuth, function(req, res){
 	var params = req.query;
 	Call.find({status:'request'})
@@ -27,6 +33,11 @@ router.get('/', tokenAuth, function(req, res){
 	});
 });
 
+/*
+ * call 정보
+ * @params : call_id, token
+ * @description
+ */
 router.get('/:call_id', tokenAuth, function(req, res){
 	var _id = req.params.call_id;
 	Call.findOne({
@@ -56,218 +67,137 @@ router.get('/:call_id', tokenAuth, function(req, res){
 	});
 });
 
+/*
+ * call 완료
+ * @params : call_id, token, type
+ * @description : caller와 callee로부터 완료정보를 받는다
+ */
 router.put('/:call_id/done/:type', tokenAuth, function(req, res){
 	var call_id = req.params.call_id;
 	var type = req.params.type;
 	var user_id = req.user_id;
-	if(type === 'caller'){
-		Call.findOne({_id : call_id, caller : user_id}
-			,function(err, item){
-				if(err){
-					return res.json(400,{
-						error : {
-							message : err.message,
-							type : err.type,
-							code : 818
-						}
-					});
-				}else{
-					var _done = item.done;
-					_done.caller = true;
-					var _status = item.status;
-					if(_done.caller && _done.callee){
-						_status = 'done';
+
+	async.waterfall([
+		// Call 정보 가져오기
+		function(callback){
+			Call.findOne({_id:call_id}, callback);
+		},
+		// Call 정보 업데이트
+		function(call, callback){
+			var done = call.done;
+			if(type === 'caller')
+				done.caller = true;
+			else if(type === 'callee')
+				done.callee = true;
+			var status = item.status;
+			if(done.caller && done.callee)
+				status = 'done';
+
+			Call.findOneAndUpdate({_id:call_id},{
+				$set:{
+					status : status,
+					done : {
+						caller : done.caller,
+						callee : done.callee
 					}
-					Call.findOneAndUpdate({
-						_id:call_id, caller:user_id
-					},{
-							$set:{
-								status : _status,
-								done : {
-									caller : _done.caller,
-									callee : _done.callee
-								}
-							}
-						},function(e, result){
-							if(e){
-								return res.json(400,{
-									error : {
-										message : e.message,
-										type : e.type,
-										code : 818
-									}
-								});
-							}else{
-								if(result.status==='done'){
-									push.pushToBoth({
-											//call : item._id,
-											type : 'done',
-											foreground : "0",
-											sound : '',
-										},{
-											caller : result.caller,
-											callee : result.callee
-										},
-										function(err, results){
-										});
-								}
-								return res.json({
-									status : _status
-								});
-							}
-						});
 				}
-			});
-	}
-	else if(type === 'callee'){
-		Call.findOne({_id : call_id, callee : user_id}
-			,function(err, item){
-				if(err){
-					return res.json(400,{
-						error : {
-							message : err.message,
-							type : err.type,
-							code : 819
-						}
-					});
-				}else{
-					var _done = item.done;
-					_done.callee = true;
-					var _status = item.status;
-					if(_done.caller && _done.callee){
-						_status = 'done';
+			},callback);
+		},
+		// processing after 'done'
+		function(call, callback){
+			if(call.status === 'done'){
+				async.parallel([
+					// user call 제거
+					function(cb){
+						User.findOneAndUpdate({_id:user_id},{$set:{call:null}},cb);
+					},
+					function(user, cb){
+						push.pushToBoth({
+							type : call.status,
+							foreground : "0",
+							sound : '',
+						},{
+							caller : call.caller,
+							callee : call.callee
+						},
+						cb);
 					}
-					Call.findOneAndUpdate({
-						_id : call_id, callee:user_id
-					},{
-							$set:{
-								status : _status,
-								done : {
-									caller : _done.caller,
-									callee : _done.callee
-								}
-							}
-						},function(e, result){
-							//console.log('callee');
-							//console.log(result);
-								if(result.status==='done'){
-									//console.log('done');
-									push.pushToBoth({
-											//call : item._id,
-											type : 'done',
-											foreground : "0",
-											sound : '',
-										},{
-											caller : result.caller,
-											callee : result.callee
-										},
-										function(err, results){
-										});
-								}
-							if(e){
-								return res.json(400,{
-									error : {
-										message : e.message,
-										type : e.type,
-										code : 819
-									}
-								});
-							}else{
-								return res.json({
-									status : _status
-								});
-							}
-						});
+				], function(err, results){
+					if(err) callback(err);
+					callback(null, call);
+				});
+			}else{
+				// 현재 상태 반환
+				callback(null, call);
+			}
+		}
+	],function(err,result){
+		if(err){
+			return res.json(400,{
+				error : {
+					message : err.message,
+					type : err.type,
+					code : 810
 				}
-			});
-	}
+			})
+		}else{
+			return res.json(result);
+		}
+	});
 });
+
+/*
+ * call 수락
+ * @params : call_id, token
+ * @description : callee로부터 수락받는다
+ */
 router.put('/:call_id/accept', tokenAuth, function(req, res){
 	var call_id = req.params.call_id;
 	var user_id = req.user_id;
-	if(user_id === undefined || user_id === null){
-		return res.json(400, {
-			error : {
-				message : 'Invalid User to accept the Call',
-				type : 'request exception',
-				code : 711
-			}
-		});
-	}
-	Call.findOne({_id:call_id}, function(err, item){
+
+	async.waterfall([
+		// update
+		function(callback){
+			Call.findOneAndUpdate({_id:call_id},
+				{$set:{status:'response', callee:user_id}}, callback);
+		},
+		// push
+		function(call, callback){
+			push.pushToOne({
+					message : 'The call for TukTuk has been responsed',
+					title : 'CamTukTuk',
+					call : call._id,
+					type : 'accept'
+				},
+				// to caller
+				call.caller,
+				callback);
+		}
+	],function(err,result){
 		if(err){
 			return res.json(500,{
 				error : {
 					message : err.message,
 					type : err.type,
-					code : 712
+					code : 710
 				}
 			});
 		}else{
-			if(item){
-				item.update({$set:{status:'response', callee:user_id}}, function(err,result){
-					if(err){
-						return res.json(500,{
-							error : {
-								message : err.message,
-								type : err.type,
-								code : 713
-							}
-						});
-					}else{
-						//console.log('accept to :'+item.caller);
-						push.pushToOne({
-							message : 'The call for TukTuk has been responsed',
-							title : 'CamTukTuk',
-							call : item._id,
-							type : 'accept'
-						},
-						// to caller
-						item.caller,
-						function(err, success){
-							if(err){
-								return res.json(400,{
-									error : {
-										message : err.message,
-										type : err.type,
-										code : 857
-									}
-								});
-							}else{
-								//console.log(success);
-								return res.json({
-									accept : true
-								});
-							}
-						});
-					}
-				});
-			}else{
-				return res.json(400, {
-					error : {
-						message : 'Invalid request',
-						type : 'not found exception',
-						code : 714
-					}
-				});
-			}
+			return res.json({accept:true});
 		}
 	});
 });
 
-router.delete('/:call_id', tokenAuth,/**/ function(req, res){
+/*
+ * call 제거
+ * @params : call_id, token
+ * @description
+ */
+router.delete('/:call_id', tokenAuth, function(req, res){
 	var call_id = req.params.call_id;
 	var user_id = req.user_id;
-	if(user_id === undefined || user_id === null){
-		return res.json(400, {
-			error : {
-				message : 'Invalid User to cancel the Request',
-				type : 'request exception',
-				code : 701
-			}
-		});
-	}
-	Call.findOne({_id:call_id,caller:user_id}, function(err, item){
+
+	Call.findOneAndRemove({_id:call_id,caller:user_id}, function(err){
 		if(err){
 			return res.json(500, {
 				error : {
@@ -277,29 +207,22 @@ router.delete('/:call_id', tokenAuth,/**/ function(req, res){
 				}
 			});
 		}else{
-			if(item){
-				item.remove();
-				return res.json({
-					delete : true
-				});
-			}else{
-				return res.json(400,{
-					error : {
-						message : 'Invalid user to cancel the request',
-						type : err.type,
-						code : 703
-					}
-				});
-			}
+			return res.json({
+				delete : true
+			});
 		}
 	});
 });
+
+/*
+ * call 요청
+ * @params : call_id, token, etc...
+ * @description
+ */
 router.post('/request', tokenAuth, function(req, res){
 	var params = req.body;
-	if(params.caller === undefined 
-		|| params.type === undefined
-		|| params.dept === undefined 
-		|| params.dest === undefined){
+	//var user_id = req.user_id;
+	if(!params.caller || !params.type	|| !params.dept || !params.dest){
 		return res.json(400,{
 			error : {
 				message : 'Need more Information to request Call',
@@ -307,7 +230,7 @@ router.post('/request', tokenAuth, function(req, res){
 				code : 601
 			}
 		});
-	}else if(params.type !== undefined && params.type === 'long' && params.rentalType === undefined){
+	}else if(!params.type && params.type === 'long' && !params.rentalType){
 		return res.json(400,{
 			error : {
 				message : 'Need more Information to request Call',
@@ -316,64 +239,49 @@ router.post('/request', tokenAuth, function(req, res){
 			}
 		});
 	}
-	var User = require('../models/user');
-	
-	User.findOne({_id:params.caller}, function(err, user){
+
+	async.waterfall([
+		// call 생성
+		function(callback){
+			var call = new Call(params);
+			call.status = 'request';
+			call.created = moment().valueOf();
+			call.save(function(err, item){
+				if(err) callback(err);
+				callback(null, item);
+			});
+		},
+		// user에게 call정보 갱신
+		function(call, callback){
+			User.findOneAndUpdate({_id:params.caller},
+				{$set : {call:call._id}}, function(err, item){
+					if(err) callback(err);
+					callback(null, item);
+				});
+		},
+		// 전체에게 푸싱
+		function(call, callback){
+			push.pushToIdles({
+					message: 'The call for TukTuk has been requested',
+					title : 'CamTukTuk',
+					call : call._id,
+					type : 'request'
+				},
+				callback);
+		}
+	],function(err, result){
 		if(err){
-			return res.json(500,{
+			return res.json(400,{
 				error : {
 					message : err.message,
 					type : err.type,
-					code : 602
+					code : 801
 				}
 			});
 		}else{
-			if(user){
-				var call = new Call(params);
-				call.status = 'request';
-				call.created = moment().valueOf();
-				call.save(function(err, item){
-					if(err){
-						return res.json(500,{
-							error : {
-								message : err.message,
-								type : err.type,
-								code : 604
-							}
-						});
-					}else{
-						push.pushToIdles({
-								message: 'The call for TukTuk has been requested',
-								title : 'CamTukTuk',
-								call : item._id,
-								type : 'request'
-							},
-							function(err, result){
-							if(err){
-								res.json(400,{
-									error : {
-										message : err.message,
-										type : err.type,
-										code : 801
-									}
-								});
-							}else{
-								return res.json(item);
-							}
-						});
-					}
-				});
-			}else{
-				return res.json(400,{
-					error : {
-						message : 'Caller is not found',
-						type : 'not found exception',
-						code : 603
-					}
-				});
-			}
+			return res.json({request:true});
 		}
-	})
+	});
 });
 
 module.exports = router;

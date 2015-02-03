@@ -44,16 +44,16 @@ var pushToOne = function(data, user_id, callback){
 // 전체 TukTuk (except 진행중인 것들) 푸싱
 var pushToIdles = function(data, callback){
 	var TukTuk = require('../models/tuktuk');
-	TukTuk.find({valid:true, call:null})
-		.populate('user', 'device_id platform')
+	TukTuk.find({valid:true})
+		.populate('user', 'device_id platform call')
 		.exec(function(err, items){
 			if(err) callback(err);
 			// 각 디바이스별 묶음
 			var android = item.filter(function(item){
-				return item.user.platform === 'Android';
+				return !item.user.call && item.user.platform === 'Android';
 			});
 			var ios = item.filter(function(item){
-				return item.user.platform === 'iOS';
+				return !item.user.call && item.user.platform === 'iOS';
 			})
 			var gcmIds = [];
 			var apnIds = [];

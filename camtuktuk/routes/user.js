@@ -114,7 +114,7 @@ router.post('/:id/join', tokenAuth, function(req, res){
 						joined : moment().valueOf()
 					});
 					tuktuk.save(function(err, obj){
-						callback(err, obj);	
+						callback(err, obj);
 					});
 				}
 			});
@@ -178,7 +178,7 @@ router.get('/:id', tokenAuth, function(req, res){
 	var id = req.params.id;
 	User
 		.findOne({_id:id})
-		.populate('tuktuk', 'name latlng call valid')
+		.populate('tuktuk', 'name latlng valid')
 		.exec(function(err, item){
 			if(err){
 				return res.json(500, {

@@ -9,11 +9,13 @@ var TukTukSchema = new Schema({
 		ref : 'user'
 	},
 	latlng : {},
+	/*/
 	// 수락한 콜 정보
 	call : {
 		type : Schema.Types.ObjectId,
 		ref : 'call'
 	},
+	/**/
 	// 가입 요청시 대기중
 	valid : {
 		type : Boolean,
