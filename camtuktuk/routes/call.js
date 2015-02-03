@@ -106,25 +106,22 @@ router.put('/:call_id/done/:type', tokenAuth, function(req, res){
 		// processing after 'done'
 		function(call, callback){
 			if(call.status === 'done'){
-				async.parallel([
-					// user call 제거
-					function(cb){
-						User.findOneAndUpdate({_id:user_id},{$set:{call:null}},cb);
-					},
-					function(user, cb){
-						push.pushToBoth({
-							type : call.status,
-							foreground : "0",
-							sound : '',
-						},{
-							caller : call.caller,
-							callee : call.callee
-						},
-						cb);
-					}
-				], function(err, results){
+				User.find({call:call._id}, function(err, items){
 					if(err) callback(err);
-					callback(null, call);
+					async.each(items, function(item, next){
+						User.findOneAndUpdate({_id:item._id}, {$set:{call:null}}, next);
+					},function(err){
+						if(err) callback(err);
+						push.pushToBoth({
+								type : call.status,
+								foreground : "0",
+								sound : '',
+							},{
+								caller : call.caller,
+								callee : call.callee
+							},
+							callback);
+					})
 				});
 			}else{
 				// 현재 상태 반환
@@ -158,8 +155,13 @@ router.put('/:call_id/accept', tokenAuth, function(req, res){
 	async.waterfall([
 		// update
 		function(callback){
+			User.findOneAndUpdate({_id:user_id},{
+				$set : {call : call_id}
+			}, callback);
+		},
+		function(user, callback){
 			Call.findOneAndUpdate({_id:call_id},
-				{$set:{status:'response', callee:user_id}}, callback);
+				{$set:{status:'response', callee:user._id}}, callback);
 		},
 		// push
 		function(call, callback){
@@ -197,7 +199,19 @@ router.delete('/:call_id', tokenAuth, function(req, res){
 	var call_id = req.params.call_id;
 	var user_id = req.user_id;
 
-	Call.findOneAndRemove({_id:call_id,caller:user_id}, function(err){
+	async.waterfall([
+		// 관련되 사용자의 call 제거
+		function(callback){
+			User.findOneAndUpdate({_id:user_id},
+				{$set : {call:null}}, function(err, item){
+					if(err) callback(err);
+					callback(null, item);
+				});
+		},
+		function(user, callback){
+			Call.findOneAndRemove({_id:call_id,caller:user._id}, callback);
+		}
+	],function(err, result){
 		if(err){
 			return res.json(500, {
 				error : {
