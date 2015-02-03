@@ -8,10 +8,7 @@ var TukTukSchema = new Schema({
 		required : true,
 		ref : 'user'
 	},
-	latlng : {
-		lat : Number,
-		lng : Number
-	},
+	latlng : {},
 	// 수락한 콜 정보
 	call : {
 		type : Schema.Types.ObjectId,

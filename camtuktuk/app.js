@@ -18,7 +18,7 @@ app.get('/', function(req, res){
 app.use('/api', require('./routes/api'));
 
 process.on('uncaughtException', function(err){
-	console.log('CaughtException:'+err);
+	console.log('Uncaught Exception: '+err.stack);
 });
 
 var server = app.listen(8180, function(){
