@@ -11,10 +11,10 @@ router.get('/', function(req, res){
 	});
 });
 /**/
-router.use('/attraction', require('./attraction'));
+//router.use('/attraction', require('./attraction'));
 router.use('/user', require('./user'));
 router.use('/tuktuk', require('./tuktuk'));
-router.use('/push', require('./push'));
+//router.use('/push', require('./push'));
 router.use('/call', require('./call'));
 router.use('/location', require('./location'));
 router.all('/*', function(req, res){
