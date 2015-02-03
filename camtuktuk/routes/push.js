@@ -190,5 +190,5 @@ var pushGCM = function(data, users, callback){
 module.exports = {
 	pushToBoth : pushToBoth,
 	pushToIdles : pushToIdles,
-	pushToOne, pushToOne
+	pushToOne : pushToOne
 };
