@@ -10,9 +10,9 @@ var pushToBoth = function(data, users, callback){
 	var async = require('async');
 	async.parallel([
 		function(cb){
-			push2user(data, users.caller, cb);
+			pushToOne(data, users.caller, cb);
 		},function(cb){
-			push2user(data, users.callee, cb);
+			pushToOne(data, users.callee, cb);
 		}
 	],callback);
 };
@@ -49,10 +49,10 @@ var pushToIdles = function(data, callback){
 		.exec(function(err, items){
 			if(err) callback(err);
 			// 각 디바이스별 묶음
-			var android = item.filter(function(item){
+			var android = items.filter(function(item){
 				return !item.user.call && item.user.platform === 'Android';
 			});
-			var ios = item.filter(function(item){
+			var ios = items.filter(function(item){
 				return !item.user.call && item.user.platform === 'iOS';
 			})
 			var gcmIds = [];
@@ -72,7 +72,7 @@ var pushToIdles = function(data, callback){
 						cb
 					);
 				},
-				function(cback){
+				function(cb){
 					pushAPN(
 						data,
 						apnIds,
@@ -167,24 +167,28 @@ var pushAPN = function(data, users, callback){
 
 //안드로이드 푸싱
 var pushGCM = function(data, users, callback){
-	var gcm = require('node-gcm');
-	var sender = new gcm.Sender('AIzaSyBI9GCyGNWpNbxSGzzfgB9bz5dUM-qnLMc');
-	var message = new gcm.Message({
-		collapseKey : ''+randomInt(1,100),
-		delayWhileIdle : false,
-		timeToLive : 10,
-		data : data,
-	});
-	sender.send(message, users, 3, function(err, result){
-		if(err){
-			callback({
-				message: err,
-				type : 'GCM exception'
-			}, null);
-		}else{
-			callback(err, result);
-		}
-	});
+	if(users.length>0){
+		var gcm = require('node-gcm');
+		var sender = new gcm.Sender('AIzaSyBI9GCyGNWpNbxSGzzfgB9bz5dUM-qnLMc');
+		var message = new gcm.Message({
+			collapseKey : ''+randomInt(1,100),
+			delayWhileIdle : false,
+			timeToLive : 10,
+			data : data,
+		});
+		sender.send(message, users, 3, function(err, result){
+			if(err){
+				callback({
+					message: err,
+					type : 'GCM exception'
+				}, null);
+			}else{
+				callback(err, result);
+			}
+		});
+	}else{
+		callback(null);
+	}
 }
 
 module.exports = {

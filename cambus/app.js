@@ -23,7 +23,6 @@ process.on('uncaughtException', function(err){
 });
 
 var server = app.listen(8080, function(){
-	
 	var uri = 'mongodb://'+argv.db_ip+':27017/cambus';
 	//var uri = 'mongodb://ds029831.mongolab.com:29831/cambus';
 	var opts ={

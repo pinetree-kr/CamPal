@@ -23,5 +23,6 @@ var TukTukSchema = new Schema({
 		default : false,
 	},
 	joined : Number,
+	updated : Number
 });
 module.exports = mongoose.model('tuktuk', TukTukSchema);

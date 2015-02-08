@@ -64,7 +64,7 @@ router.post('/auth', function(req, res){
 							joined : moment().valueOf()
 						});
 						user.token = jwt.encode(user, secret, 'HS256');
-						userModel.save(next);
+						user.save(next);
 					}
 				],callback);
 			}

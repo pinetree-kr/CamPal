@@ -9,6 +9,7 @@ var push = require('./push');
 
 var tokenAuth = auth.tokenAuth;
 
+
 /*
  * call 목록 조회
  * @params : token
@@ -89,10 +90,9 @@ router.put('/:call_id/done/:type', tokenAuth, function(req, res){
 				done.caller = true;
 			else if(type === 'callee')
 				done.callee = true;
-			var status = item.status;
+			var status = call.status;
 			if(done.caller && done.callee)
 				status = 'done';
-
 			Call.findOneAndUpdate({_id:call_id},{
 				$set:{
 					status : status,
@@ -268,9 +268,9 @@ router.post('/request', tokenAuth, function(req, res){
 		// user에게 call정보 갱신
 		function(call, callback){
 			User.findOneAndUpdate({_id:params.caller},
-				{$set : {call:call._id}}, function(err, item){
+				{$set : {call:call._id}}, function(err){
 					if(err) callback(err);
-					callback(null, item);
+					callback(null, call);
 				});
 		},
 		// 전체에게 푸싱
@@ -281,7 +281,10 @@ router.post('/request', tokenAuth, function(req, res){
 					call : call._id,
 					type : 'request'
 				},
-				callback);
+				function(err){
+					if(err) callback(err);
+					callback(null, call);
+				});
 		}
 	],function(err, result){
 		if(err){
@@ -293,7 +296,7 @@ router.post('/request', tokenAuth, function(req, res){
 				}
 			});
 		}else{
-			return res.json({request:true});
+			return res.json({request:true, _id:result._id});
 		}
 	});
 });
