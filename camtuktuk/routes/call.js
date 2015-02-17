@@ -9,6 +9,7 @@ var push = require('./push');
 
 var tokenAuth = auth.tokenAuth;
 
+var limit = 5*60*1000;
 
 /*
  * call 목록 조회
@@ -16,11 +17,38 @@ var tokenAuth = auth.tokenAuth;
  * @description
  */
 router.get('/', tokenAuth, function(req, res){
-	var params = req.query;
-	Call.find({status:'request'})
-	.populate('caller','phone_no')
-	.exec(function(err, items){
+	//var params = req.query;
+	var user_id = req.user_id;
+	//var user_id = "54d8c0b6e34abcfd25da0668";
+	async.parallel([
+		function(callback){
+			Call.find({
+				status:'request',
+				created:{
+					$gt:moment().valueOf()-limit
+				}
+			})
+			.populate('caller','phone_no')
+			.exec(callback);
+		},
+		function(callback){
+			var TukTuk = require('../models/tuktuk');
+			TukTuk.findOne({user:user_id}, function(err,item){
+				if(err) callback(err);
+				if(!item){
+					callback({
+						message : 'Invalid auth',
+						type : 'invalid auth exception'
+					});
+				}else{
+					callback(null, item);
+				}
+			});
+		}
+	],function(err, results){
 		if(err){
+			console.log('getCall');
+			console.log(err);
 			return res.json(500,{
 				error : {
 					message : err.message,
@@ -29,7 +57,16 @@ router.get('/', tokenAuth, function(req, res){
 				}
 			});
 		}else{
-			return res.json(items);
+			var tuktuk = results[1];
+			var calls = results[0];
+			var geoTools = require('geo-tools');
+			var datas = calls.filter(function(item){
+				//return true;
+				var length = distance(tuktuk.latlng, item.dept.latlng);
+				if(length<=0.8)	return true;
+				else return false;
+			});
+			return res.json(datas);
 		}
 	});
 });
@@ -40,11 +77,13 @@ router.get('/', tokenAuth, function(req, res){
  * @description
  */
 router.get('/:call_id', tokenAuth, function(req, res){
-	var _id = req.params.call_id;
+	var call_id = req.params.call_id;
 	Call.findOne({
-		_id : _id
+		_id : call_id
 	},function(err, item){
 		if(err){
+			console.log('getCallId');
+			console.log(err);
 			return res.json(500,{
 				error : {
 					message : err.message,
@@ -54,7 +93,31 @@ router.get('/:call_id', tokenAuth, function(req, res){
 			});
 		}else{
 			if(item){
-				return res.json(item);
+				if(item.status==='request'
+					&& item.created < moment().valueOf()-limit){
+					return res.json(400,{
+						error : {
+							message : 'This call is expired',
+							type : 'not found exception',
+							code : 625
+						}
+					});
+				}
+				var data = {
+					_id : item._id,
+					caller : item.caller,
+					callee : item.callee,
+					type : item.type,
+					rentalType : item.rentalType,
+					dest : item.dest,
+					dept : item.dept,
+					latlng : item.latlng,					
+					done : item.done,
+					status : item.status,
+					created : item.created,
+					limit : (item.created + limit)
+				};
+				return res.json(data);
 			}else{
 				return res.json(400,{
 					error : {
@@ -81,7 +144,9 @@ router.put('/:call_id/done/:type', tokenAuth, function(req, res){
 	async.waterfall([
 		// Call 정보 가져오기
 		function(callback){
-			Call.findOne({_id:call_id}, callback);
+			Call.findOne({
+				_id:call_id,
+			}, callback);
 		},
 		// Call 정보 업데이트
 		function(call, callback){
@@ -130,6 +195,8 @@ router.put('/:call_id/done/:type', tokenAuth, function(req, res){
 		}
 	],function(err,result){
 		if(err){
+			console.log('done');
+			console.log(err);
 			return res.json(400,{
 				error : {
 					message : err.message,
@@ -155,13 +222,36 @@ router.put('/:call_id/accept', tokenAuth, function(req, res){
 	async.waterfall([
 		// update
 		function(callback){
+			Call.findOneAndUpdate(
+				{
+					_id:call_id,
+					status:'request',
+					created:{
+						$gt:moment().valueOf()-limit
+					}
+				},
+				{
+					$set:{
+						status:'response',
+						callee:user_id
+					}
+				},
+				function(err,result){
+					if(err) callback(err);
+					if(result) callback(null, result);
+					else callback({
+						message : 'Not found the call',
+						type : 'not found exception'
+					});
+				});
+		},
+		function(call, callback){
 			User.findOneAndUpdate({_id:user_id},{
 				$set : {call : call_id}
-			}, callback);
-		},
-		function(user, callback){
-			Call.findOneAndUpdate({_id:call_id},
-				{$set:{status:'response', callee:user._id}}, callback);
+			}, function(err, result){
+				if(err) callback(err);
+				callback(null, call);
+			});
 		},
 		// push
 		function(call, callback){
@@ -177,6 +267,8 @@ router.put('/:call_id/accept', tokenAuth, function(req, res){
 		}
 	],function(err,result){
 		if(err){
+			console.log('accept');
+			console.log(err);
 			return res.json(500,{
 				error : {
 					message : err.message,
@@ -213,6 +305,8 @@ router.delete('/:call_id', tokenAuth, function(req, res){
 		}
 	],function(err, result){
 		if(err){
+			console.log('delete');
+			console.log(err);
 			return res.json(500, {
 				error : {
 					message : err.message,
@@ -279,6 +373,7 @@ router.post('/request', tokenAuth, function(req, res){
 					message: 'The call for TukTuk has been requested',
 					title : 'CamTukTuk',
 					call : call._id,
+					latlng : call.dept.latlng,
 					type : 'request'
 				},
 				function(err){
@@ -288,6 +383,8 @@ router.post('/request', tokenAuth, function(req, res){
 		}
 	],function(err, result){
 		if(err){
+			console.log('request');
+			console.log(err);
 			return res.json(400,{
 				error : {
 					message : err.message,
@@ -296,7 +393,14 @@ router.post('/request', tokenAuth, function(req, res){
 				}
 			});
 		}else{
-			return res.json({request:true, _id:result._id});
+			return res.json({
+				request:true,
+				call : {
+					_id:result._id,
+					created:result.created,
+					limit : (result.created+limit)
+				}
+			});
 		}
 	});
 });

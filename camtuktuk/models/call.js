@@ -12,7 +12,7 @@ var CallSchema = new Schema({
 		ref : 'user'
 	},
 	type : String,
-	rentalType : String,
+	rentalType : {},
 	status : {
 		//request, response, done
 		type : String,

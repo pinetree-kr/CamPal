@@ -15,8 +15,8 @@ router.post('/', tokenAuth, function(req, res){
 	var user_id = req.user_id;
 	if(params.location){
 		var latlng = {
-			latitude : params.location.latitude,
-			longitude : params.location.longitude
+			latitude : Number(params.location.latitude),
+			longitude : Number(params.location.longitude)
 		};
 		updated = moment().valueOf();
 

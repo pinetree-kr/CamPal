@@ -10,6 +10,7 @@
     "excel-parser": "0.2.2",
     "express": "4.2.0",
     "fb": "^0.7.0",
+    "geo-tools": "^0.1.2",
     "http": "0.0.0",
     "jwt-simple": "^0.2.0",
     "moment": "^2.9.0",

@@ -48,12 +48,28 @@ var pushToIdles = function(data, callback){
 		.populate('user', 'device_id platform call')
 		.exec(function(err, items){
 			if(err) callback(err);
-			// 각 디바이스별 묶음
-			var android = items.filter(function(item){
-				return !item.user.call && item.user.platform === 'Android';
+
+			var geoTools = require('geo-tools');
+			var validItems = items.filter(function(item){
+				var length  = distance({
+						lat : data.latlng.latitude,
+						lng : data.latlng.longitude
+					},{
+						lat : item.latlng.latitude,
+						lng : item.latlng.longitude
+					});
+				if(item.user && !item.user.call && length<=0.8){
+					return true;
+				}else{
+					return false;
+				}
 			});
-			var ios = items.filter(function(item){
-				return !item.user.call && item.user.platform === 'iOS';
+			// 각 디바이스별 묶음
+			var android = validItems.filter(function(item){
+				return item.user.platform === 'Android';
+			});
+			var ios = validItems.filter(function(item){
+				return item.user.platform === 'iOS';
 			})
 			var gcmIds = [];
 			var apnIds = [];
@@ -140,10 +156,12 @@ var pushAPN = function(data, users, callback){
 		apnProd.on('transmitted' , function(n, d){
 			console.log('transmitted');
 		});
+		/*/
 		apnProd.on('transmissionError', function(code, n, d){
 			console.log('transmissionError');
 			console.log(code);
 		});
+		/**/
 		apnProd.on('timeout' , function(){
 			console.log('timeout');
 			callback({

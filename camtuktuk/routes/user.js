@@ -11,6 +11,7 @@ var secret = 'photobypinetree';
 var auth = require('./auth');
 
 var tokenAuth = auth.tokenAuth;
+var limit = 5*60*1000;
 
 /*
  * 인증 및 토큰 발행
@@ -21,7 +22,7 @@ router.post('/auth', function(req, res){
 	var params = req.body;
 	var jwt = require('jwt-simple');
 
-	if(params.phone_no == undefined || params.device_id === undefined){
+	if(!params.phone_no || !params.device_id){
 		return res.json(400,{
 			error : {
 				message : 'Need Phone # and Device ID to get auth',
@@ -51,10 +52,20 @@ router.post('/auth', function(req, res){
 				// device_id 존재 여부 확인 후 제거
 				async.waterfall([
 					function(next){
+						console.log('remove user');
 						User.findOneAndRemove({device_id:params.device_id},next);
+					},
+					function(user, next){
+						if(user){
+							console.log('remove tuktuk:'+user);
+							TukTuk.findOneAndRemove({user:user._id},next);
+						}else{
+							next();
+						}
 					},
 					// 추가
 					function(next){
+						console.log('add user');
 						var expires = moment().add(7,'days').valueOf();
 						var user = new User({
 							device_id : params.device_id,
@@ -179,6 +190,7 @@ router.get('/:id', tokenAuth, function(req, res){
 	User
 		.findOne({_id:id})
 		.populate('tuktuk', 'name latlng valid')
+		.populate('call', 'status created')
 		.exec(function(err, item){
 			if(err){
 				return res.json(500, {
@@ -190,6 +202,12 @@ router.get('/:id', tokenAuth, function(req, res){
 					});
 			}else{
 				if(item){
+					if(item.call
+						&& item.call.status === 'request'
+						&& item.call.created < moment().valueOf() - limit){
+						item.call = null;
+					}
+					//console.log('login:'+item);
 					return res.json(item);
 				}else{
 					return res.json(404, {
