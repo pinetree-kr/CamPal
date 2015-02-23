@@ -2,14 +2,14 @@ var mongoose = require('mongoose');
 var Schema = mongoose.Schema;
 
 var CallSchema = new Schema({
-	caller : {
+	user :{
 		type : Schema.Types.ObjectId,
 		required : true,
 		ref : 'user'
 	},
-	callee : {
+	tuktuk : {
 		type : Schema.Types.ObjectId,
-		ref : 'user'
+		ref : 'tuktuk'
 	},
 	type : String,
 	rentalType : {},
@@ -20,11 +20,11 @@ var CallSchema = new Schema({
 		default : 'request'
 	},
 	done : {
-		caller : {
+		user : {
 			type: Boolean,
 			default : false
 		},
-		callee : {
+		tuktuk : {
 			type : Boolean,
 			default : false
 		}

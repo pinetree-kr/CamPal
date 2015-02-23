@@ -10,35 +10,58 @@ var pushToBoth = function(data, users, callback){
 	var async = require('async');
 	async.parallel([
 		function(cb){
-			pushToOne(data, users.caller, cb);
+			pushToOne(data, users.user, false, cb);
 		},function(cb){
-			pushToOne(data, users.callee, cb);
+			pushToOne(data, users.tuktuk, true, cb);
 		}
 	],callback);
 };
 
 // 특정 유저에게 푸시
-var pushToOne = function(data, user_id, callback){
-	var User = require('../models/user');
-	User.findOne({_id:user_id}, function(err, user){
-		if(err){
-			return res.json(400,{
-				error : {
-					message : err.message,
-					type : err.type,
-					code :856
+var pushToOne = function(data, user_id, istuktuk, callback){
+	var push = function(item){
+		var users = [];
+		users.push(item.device_id);
+		if(item.platform === 'Android'){
+			pushGCM(data, users, callback);
+		}else if(item.platform === 'iOS'){
+			pushAPN(data, users, callback);
+		}
+	}
+	var error = function(err){
+		return res.json(400,{
+			error : {
+				message : err.message,
+				type : err.type,
+				code :856
+			}
+		});
+	}
+	if(istuktuk){
+		var Tuktuk = require('../models/tuktuk');
+		Tuktuk.findOne({_id:user_id})
+			.populate('user', 'device_id platform')
+			.exec(function(err, tuktuk){
+				if(err){
+					error(err);
+				}else{
+					if(tuktuk){
+						push(tuktuk.user);
+					}
 				}
 			});
-		}else{
-			var users = [];
-			users.push(user.device_id);
-			if(user.platform === 'Android'){
-				pushGCM(data, users, callback);
-			}else if(user.platform === 'iOS'){
-				pushAPN(data, users, callback);
+	}else{
+		var User = require('../models/user');	
+		User.findOne({_id:user_id}, function(err, user){
+			if(err){
+				error(err);
+			}else{
+				if(user){
+					push(user);
+				}
 			}
-		}
-	});
+		});
+	}
 }
 
 // 전체 TukTuk (except 진행중인 것들) 푸싱
@@ -49,15 +72,9 @@ var pushToIdles = function(data, callback){
 		.exec(function(err, items){
 			if(err) callback(err);
 
-			var geoTools = require('geo-tools');
+			var Distance = require('./distance');
 			var validItems = items.filter(function(item){
-				var length  = distance({
-						lat : data.latlng.latitude,
-						lng : data.latlng.longitude
-					},{
-						lat : item.latlng.latitude,
-						lng : item.latlng.longitude
-					});
+				var length  = Distance.distance(data.call.latlng, item.latlng);
 				if(item.user && !item.user.call && length<=0.8){
 					return true;
 				}else{
@@ -148,13 +165,13 @@ var pushAPN = function(data, users, callback){
 			console.log('error'+err);
 		});
 		apnProd.on('completed', function(){
-			console.log('completed');
+			//console.log('completed');
 			callback(null, {
 				success : true
 			});
 		});
 		apnProd.on('transmitted' , function(n, d){
-			console.log('transmitted');
+			//console.log('transmitted');
 		});
 		/*/
 		apnProd.on('transmissionError', function(code, n, d){

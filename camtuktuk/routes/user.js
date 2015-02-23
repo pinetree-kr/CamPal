@@ -11,7 +11,8 @@ var secret = 'photobypinetree';
 var auth = require('./auth');
 
 var tokenAuth = auth.tokenAuth;
-var limit = 5*60*1000;
+var limit = require('./config').limit;
+//var limit = 5*60*1000;
 
 /*
  * 인증 및 토큰 발행
