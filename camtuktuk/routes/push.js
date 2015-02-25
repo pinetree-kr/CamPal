@@ -71,16 +71,27 @@ var pushToIdles = function(data, callback){
 		.populate('user', 'device_id platform call')
 		.exec(function(err, items){
 			if(err) callback(err);
-
-			var Distance = require('./distance');
-			var validItems = items.filter(function(item){
-				var length  = Distance.distance(data.call.latlng, item.latlng);
-				if(item.user && !item.user.call && length<=0.8){
-					return true;
-				}else{
-					return false;
-				}
-			});
+			
+			var validItems;
+			if(data.type === 'request'){
+				var Distance = require('./distance');
+				validItems = items.filter(function(item){
+					var length  = Distance.distance(data.call.latlng, item.latlng);
+					if(item.user && !item.user.call && length<=0.8){
+						return true;
+					}else{
+						return false;
+					}
+				});
+			}else{
+				validItems = items.filter(function(item){
+					if(item.user && !item.user.call){
+						return true;
+					}else{
+						return false;
+					}
+				});
+			}
 			// 각 디바이스별 묶음
 			var android = validItems.filter(function(item){
 				return item.user.platform === 'Android';

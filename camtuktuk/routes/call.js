@@ -133,8 +133,6 @@ router.get('/:call_id', tokenAuth, function(req, res){
 					};
 					return res.json(data);
 					});
-				/**/
-
 			}else{
 				return res.json(400,{
 					error : {
@@ -204,9 +202,7 @@ router.put('/:call_id/done/:type', tokenAuth, function(req, res){
 										type : call.status,
 										call : {
 											_id : call._id
-										}
-										//foreground : "0",
-										//sound : '',
+										}	
 									},{
 										user : call.user,
 										tuktuk : call.tuktuk
@@ -309,22 +305,39 @@ router.put('/:call_id/accept', tokenAuth, function(req, res){
 		// push
 		function(tuktuk, call, user, callback){
 			//console.log('call:'+call);
-			push.pushToOne({
-					message : 'The call for TukTuk has been responsed',
-					title : 'CamTukTuk',
-					call : {
-						_id : call._id,
-						//tuktuk : result.call.tuktuk
-						phone_no : user.phone_no,
-						latlng : tuktuk.latlng
-					//todo
+			async.parallel([
+				function(cb){
+					push.pushToOne({
+						message : 'The call for TukTuk has been responsed',
+						title : 'CamTukTuk',
+						call : {
+							_id : call._id,
+							phone_no : user.phone_no,
+							latlng : tuktuk.latlng
+						},
+						type : 'response'
 					},
-					type : 'response'
+					call.user,
+					false,
+					cb);
 				},
-				//result.user._id,
-				call.user,
-				false,
-				callback);
+				function(cb){
+					push.pushToIdles({
+						title : 'CamTukTuk',
+						call : {
+							_id : call._id,
+							//latlng : tuktuk.latlng
+						},
+						type : 'responsed'
+					},cb);
+				}
+			],function(err, results){
+				if(err){callback(err);}
+				else{
+					callback(null, true);
+				}
+			});
+			
 		}
 	],function(err,result){
 		if(err){
