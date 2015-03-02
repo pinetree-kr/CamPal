@@ -23,6 +23,7 @@ router.get('/', tokenAuth, function(req, res){
 	async.parallel([
 		function(callback){
 			Call.find({
+				//status : 'cancel',
 				status:'request',
 				//TODO
 				/**/
@@ -65,10 +66,13 @@ router.get('/', tokenAuth, function(req, res){
 			var Distance = require('./distance');
 			var datas = calls.filter(function(item){
 				//TODO
-				return true;
+				//return true;
 				var length = Distance.distance(tuktuk.latlng, item.dept.latlng);
 				if(length<=0.8)	return true;
 				else return false;
+			});
+			datas.forEach(function(item){
+				item.limit = item.created + limit;
 			});
 			return res.json(datas);
 		}
@@ -305,6 +309,20 @@ router.put('/:call_id/accept', tokenAuth, function(req, res){
 		// push
 		function(tuktuk, call, user, callback){
 			//console.log('call:'+call);
+			push.pushToOne({
+				message : 'The call for TukTuk has been responsed',
+				title : 'CamTukTuk',
+				call : {
+					_id : call._id,
+					phone_no : user.phone_no,
+					latlng : tuktuk.latlng
+				},
+				type : 'response'
+			},
+			call.user,
+			false,
+			callback);
+			/*/
 			async.parallel([
 				function(cb){
 					push.pushToOne({
@@ -337,7 +355,7 @@ router.put('/:call_id/accept', tokenAuth, function(req, res){
 					callback(null, true);
 				}
 			});
-			
+			/**/
 		}
 	],function(err,result){
 		if(err){
@@ -386,6 +404,7 @@ router.delete('/:call_id', tokenAuth, function(req, res){
 					}
 				});
 		},
+		/*/
 		function(call, callback){
 			push.pushToIdles({
 				message: 'The call for TukTuk has been requested',
@@ -405,6 +424,7 @@ router.delete('/:call_id', tokenAuth, function(req, res){
 				callback(null, call);
 			});
 		}
+		/**/
 	],function(err, result){
 		if(err){
 			console.log('cancel');

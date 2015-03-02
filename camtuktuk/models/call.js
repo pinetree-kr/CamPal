@@ -46,6 +46,7 @@ var CallSchema = new Schema({
 	created : {
 		type : Number,
 		required : true
-	}
+	},
+	limit : Number
 });
 module.exports = mongoose.model('call', CallSchema);

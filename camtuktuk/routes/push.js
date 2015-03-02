@@ -76,6 +76,8 @@ var pushToIdles = function(data, callback){
 			if(data.type === 'request'){
 				var Distance = require('./distance');
 				validItems = items.filter(function(item){
+					if(!item.latlng)
+						return false;
 					var length  = Distance.distance(data.call.latlng, item.latlng);
 					if(item.user && !item.user.call && length<=0.8){
 						return true;

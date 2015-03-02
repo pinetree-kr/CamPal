@@ -21,8 +21,7 @@ process.on('uncaughtException', function(err){
 	console.log('Uncaught Exception: '+err.stack);
 });
 
-var server = app.listen(8180, function(){
-	
+var server = app.listen(8180, function(){	
 	var uri = 'mongodb://'+argv.db_ip+':27017/camtuktuk';
 	var opts ={
 		/**/
@@ -31,5 +30,8 @@ var server = app.listen(8180, function(){
 	}
 	mongoose.connect(uri, opts);
 	console.log('listening on port %d', server.address().port);
-	
 });
+
+// for socket.io
+var io = require('socket.io').listen(server);
+require('./routes/socket')(io);
